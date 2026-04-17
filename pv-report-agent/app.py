@@ -13,6 +13,47 @@ from src.excel_builder import build_excel
 from src.product_scraper import scrape_product_info, ProductInfo
 from src.types import ProcessedData
 
+
+def extract_uploads_to(tmpdir: Path, uploaded) -> list[str]:
+    """업로드된 파일 리스트(ZIP + .txt 혼합)를 tmpdir에 평탄화하여 저장.
+    반환: 저장된 .txt 파일 이름 목록."""
+    if not uploaded:
+        return []
+    for f in uploaded:
+        name = f.name
+        if name.lower().endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(f.getvalue())) as zf:
+                zf.extractall(tmpdir)
+        elif name.lower().endswith(".txt"):
+            (tmpdir / name).write_bytes(f.getvalue())
+
+    # ZIP 내 서브디렉토리 평탄화
+    for txt in list(tmpdir.rglob("*.txt")):
+        if txt.parent != tmpdir:
+            dest = tmpdir / txt.name
+            if not dest.exists():
+                txt.rename(dest)
+    return sorted(p.name for p in tmpdir.glob("*.txt"))
+
+
+def read_demo_bytes_from_uploads(uploaded) -> bytes | None:
+    """업로드 리스트에서 DEMO.txt 원본 바이트 반환 (기간 자동 감지용)."""
+    if not uploaded:
+        return None
+    for f in uploaded:
+        if f.name.lower() == "demo.txt":
+            return f.getvalue()
+    for f in uploaded:
+        if f.name.lower().endswith(".zip"):
+            try:
+                with zipfile.ZipFile(io.BytesIO(f.getvalue())) as zf:
+                    for n in zf.namelist():
+                        if n.split("/")[-1].upper() == "DEMO.TXT":
+                            return zf.read(n)
+            except Exception:
+                continue
+    return None
+
 st.set_page_config(page_title="PV 보고서 자동화", page_icon="📋", layout="wide")
 
 # ── 헤더 ─────────────────────────────────────────────────────
@@ -22,11 +63,15 @@ st.caption("식약처 품목갱신 가이드라인(99~115p) 기반 Word 문서 +
 # ── 워크플로 안내 ────────────────────────────────────────────
 with st.expander("📌 사용 방법", expanded=False):
     st.markdown("""
-    1. **원시자료 ZIP** 업로드 — DEMO/DRUG/EVENT/ASSESSMENT.txt 포함 ZIP
+    1. **원시자료 업로드** — 다음 둘 중 편한 방법:
+       - **방법 A**: DEMO/DRUG/EVENT/ASSESSMENT.txt를 압축한 **ZIP 파일 1개**
+       - **방법 B**: 개별 **.txt 파일 여러 개**를 Ctrl/Cmd+클릭 또는 **드래그앤드롭**으로 선택
     2. **제품 정보 URL** 입력 — [식약처 의약품통합정보시스템](https://nedrug.mfds.go.kr) 제품 상세페이지 URL
     3. **분석 기간** 및 추가 정보 확인 후 **보고서 생성** 클릭
     4. 생성된 **원시자료 분석 엑셀** 및 **안전관리보고서 Word** 다운로드
     5. Word 초안의 노란색 항목을 직접 수정하여 최종화
+
+    필수 파일: `DEMO.txt`, `DRUG.txt`, `EVENT.txt` / 선택: `ASSESSMENT.txt`, `DRUG1/2/3.txt`
     """)
 
 # ── 입력 영역 ────────────────────────────────────────────────
@@ -34,10 +79,16 @@ col_left, col_right = st.columns([1, 1], gap="large")
 
 with col_left:
     st.subheader("① 원시자료 업로드")
-    zip_file = st.file_uploader(
-        "원시자료 ZIP 파일",
-        type=["zip"],
-        help="DEMO.txt, DRUG.txt, EVENT.txt가 필수입니다. ASSESSMENT.txt는 선택사항."
+    uploaded_files = st.file_uploader(
+        "원시자료 (ZIP 또는 여러 .txt 파일)",
+        type=["zip", "txt"],
+        accept_multiple_files=True,
+        help=(
+            "두 가지 방법 중 편한 쪽으로 업로드:\n"
+            "• 방법 1: DEMO/DRUG/EVENT/ASSESSMENT.txt를 압축한 ZIP 파일 1개\n"
+            "• 방법 2: 개별 .txt 파일들을 Ctrl/Cmd+클릭으로 여러 개 선택, 또는 드래그앤드롭\n\n"
+            "필수: DEMO.txt, DRUG.txt, EVENT.txt / 선택: ASSESSMENT.txt, DRUG1/2/3.txt"
+        )
     )
 
     st.subheader("② 제품 정보 URL")
@@ -65,33 +116,30 @@ with col_left:
 with col_right:
     st.subheader("③ 분석 기간")
 
-    # ZIP이 업로드되면 DEMO.txt에서 기간 자동 감지
+    # 업로드된 파일(ZIP 또는 개별)에서 DEMO.txt 찾아 기간 자동 감지
     _auto_start, _auto_end = "", ""
-    if zip_file is not None:
+    _demo_bytes = read_demo_bytes_from_uploads(uploaded_files)
+    if _demo_bytes is not None:
         try:
             import pandas as _pd
-            with zipfile.ZipFile(io.BytesIO(zip_file.getvalue())) as _zf:
-                _names = {n.split("/")[-1]: n for n in _zf.namelist() if n.endswith("DEMO.txt")}
-                if _names:
-                    _demo_raw = _pd.read_csv(
-                        _zf.open(next(iter(_names.values()))),
-                        sep="|", dtype=str,
-                        encoding_errors="replace",
-                    )
-                    _auto_start, _auto_end = detect_period(_demo_raw)
-                    if _auto_start:
-                        _auto_start = f"{_auto_start[:4]}-{_auto_start[4:6]}-{_auto_start[6:]}"
-                        _auto_end   = f"{_auto_end[:4]}-{_auto_end[4:6]}-{_auto_end[6:]}"
+            _demo_raw = _pd.read_csv(
+                io.BytesIO(_demo_bytes),
+                sep="|", dtype=str, encoding_errors="replace",
+            )
+            _auto_start, _auto_end = detect_period(_demo_raw)
+            if _auto_start:
+                _auto_start = f"{_auto_start[:4]}-{_auto_start[4:6]}-{_auto_start[6:]}"
+                _auto_end   = f"{_auto_end[:4]}-{_auto_end[4:6]}-{_auto_end[6:]}"
         except Exception:
             pass
 
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.text_input("시작일 (YYYY-MM-DD)", value=_auto_start or "2020-09-21",
-                                   help="ZIP의 DEMO.txt에서 자동 감지")
+                                   help="업로드된 DEMO.txt에서 자동 감지")
     with col2:
         end_date = st.text_input("종료일 (YYYY-MM-DD)", value=_auto_end or "2024-06-30",
-                                 help="ZIP의 DEMO.txt에서 자동 감지")
+                                 help="업로드된 DEMO.txt에서 자동 감지")
 
     st.subheader("④ 제품 정보 확인/수정")
     drug_code_input = st.text_input(
@@ -120,34 +168,29 @@ with col_right:
         value=product.item_seq if product else "",
     )
 
-# ── 생성 버튼 ────────────────────────────────────────────────
+# ── 업로드 상태 ─────────────────────────────────────────────
 st.divider()
-ready = zip_file is not None
-if not ready:
-    st.info("원시자료 ZIP 파일을 업로드하면 보고서 생성이 활성화됩니다.")
+ready = bool(uploaded_files)
+if ready:
+    _n = len(uploaded_files)
+    _names = ", ".join(f.name for f in uploaded_files)
+    st.success(f"📂 {_n}개 파일 업로드됨: {_names}")
+else:
+    st.info("원시자료 ZIP 또는 개별 .txt 파일을 업로드하면 보고서 생성이 활성화됩니다.")
 
 if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
-    progress = st.progress(0, text="ZIP 파일 압축 해제 중...")
+    progress = st.progress(0, text="파일 정리 중...")
     warnings_log: list[str] = []
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
 
-            # ── STEP 1: ZIP 압축 해제 ──────────────────────────
-            with zipfile.ZipFile(io.BytesIO(zip_file.getvalue())) as zf:
-                zf.extractall(tmpdir)
-
-            # 평탄화: 서브디렉토리 내 txt 파일을 최상위로 이동
-            txt_files = list(tmpdir.rglob("*.txt"))
-            if not txt_files:
-                st.error("❌ ZIP에 .txt 파일이 없습니다. DEMO.txt, DRUG.txt, EVENT.txt가 포함된 ZIP을 업로드하세요.")
+            # ── STEP 1: 업로드 파일 정리 (ZIP 압축 해제 or 개별 .txt 복사) ──
+            extracted = extract_uploads_to(tmpdir, uploaded_files)
+            if not extracted:
+                st.error("❌ .txt 파일이 발견되지 않았습니다. ZIP 또는 .txt 파일을 업로드하세요.")
                 st.stop()
-            for txt in txt_files:
-                if txt.parent != tmpdir:
-                    dest = tmpdir / txt.name
-                    if not dest.exists():
-                        txt.rename(dest)
 
             required = ["DEMO.txt", "DRUG.txt", "EVENT.txt"]
             missing = [f for f in required if not (tmpdir / f).exists()]
