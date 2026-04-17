@@ -1,16 +1,67 @@
+import base64
 import io
+import re
 import zipfile
 import tempfile
 from pathlib import Path
 
 import streamlit as st
 
+
+MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+def make_download_anchor(data: bytes, filename: str, label: str, mime: str) -> str:
+    """st.download_button 대체 — base64 data URI 앵커.
+
+    클릭해도 Streamlit 스크립트 rerun이 발생하지 않으므로,
+    엑셀/워드 두 개 버튼이 서로의 상태를 건드리지 않고 동시에 유지된다.
+    """
+    b64 = base64.b64encode(data).decode("ascii")
+    return (
+        f'<a class="dl-btn" href="data:{mime};base64,{b64}" download="{filename}">'
+        f"{label}</a>"
+    )
+
+
+_DOWNLOAD_BTN_CSS = """
+<style>
+a.dl-btn {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: #ffffff;
+    color: rgb(49, 51, 63) !important;
+    text-align: center;
+    border: 1px solid rgba(49, 51, 63, 0.2);
+    border-radius: 0.5rem;
+    text-decoration: none !important;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.6;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+a.dl-btn:hover {
+    border-color: #FF4B4B;
+    color: #FF4B4B !important;
+}
+a.dl-btn:active {
+    background: #FF4B4B;
+    color: #ffffff !important;
+    border-color: #FF4B4B;
+}
+</style>
+"""
+
 from src.validator import load_and_validate, ValidationError
 from src.transformer import filter_invalid, transform_demo, transform_drug, transform_event, transform_assessment, detect_period
 from src.joiner import detect_drug_code, join_tables, build_line_listing
 from src.report_builder import build_report
 from src.excel_builder import build_excel
-from src.product_scraper import scrape_product_info, ProductInfo
+from src.product_scraper import scrape_product_info, lookup_product_info, search_drug_by_name, ProductInfo
 from src.types import ProcessedData
 
 
@@ -54,12 +105,77 @@ def read_demo_bytes_from_uploads(uploaded) -> bytes | None:
                 continue
     return None
 
+
+def read_readme_bytes_from_uploads(uploaded) -> bytes | None:
+    """업로드 리스트에서 README.txt 원본 바이트 반환 (품목코드·보고기간 자동 감지용)."""
+    if not uploaded:
+        return None
+    _targets = {"readme.txt", "read.me", "readme"}
+    for f in uploaded:
+        if f.name.lower() in _targets:
+            return f.getvalue()
+    for f in uploaded:
+        if f.name.lower().endswith(".zip"):
+            try:
+                with zipfile.ZipFile(io.BytesIO(f.getvalue())) as zf:
+                    for n in zf.namelist():
+                        base = n.split("/")[-1].lower()
+                        if base in _targets:
+                            return zf.read(n)
+            except Exception:
+                continue
+    return None
+
+
+def parse_readme(raw: bytes) -> dict:
+    """KAERS DB README.txt에서 요청 품목코드·보고기간을 추출한다.
+
+    반환 예: {"item_code": "201506668", "start_date": "2020-09-21", "end_date": "2024-06-30"}
+    """
+    if not raw:
+        return {}
+    text = ""
+    for enc in ("utf-8-sig", "utf-8", "cp949", "euc-kr"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    if not text:
+        return {}
+
+    result: dict = {}
+
+    # 요청 품목코드 : 201506668  (또는 "요청 품목기준코드")
+    m_code = re.search(r"요청\s*품목(?:기준)?코드\s*[:：]\s*([0-9A-Za-z]+)", text)
+    if m_code:
+        result["item_code"] = m_code.group(1).strip()
+
+    # 요청 자료 보고기간 : 2020.09.21. ~ 2024.06.30.
+    m_period = re.search(
+        r"요청\s*자료\s*보고\s*기간\s*[:：]\s*"
+        r"(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\.?\s*~\s*"
+        r"(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})\.?",
+        text,
+    )
+    if m_period:
+        g = m_period.groups()
+        result["start_date"] = f"{g[0]}-{g[1].zfill(2)}-{g[2].zfill(2)}"
+        result["end_date"] = f"{g[3]}-{g[4].zfill(2)}-{g[5].zfill(2)}"
+
+    return result
+
 st.set_page_config(page_title="PV 보고서 자동화", page_icon="📋", layout="wide")
+st.markdown(_DOWNLOAD_BTN_CSS, unsafe_allow_html=True)
 
 # ── 상태 초기화용 nonce (위젯 key를 바꿔 완전 초기화) ─────────
 if "nonce" not in st.session_state:
     st.session_state.nonce = 0
 _n = st.session_state.nonce
+if "generated_result" not in st.session_state:
+    st.session_state.generated_result = None
+if "edited_files" not in st.session_state:
+    st.session_state.edited_files = {"xlsx": None, "docx": None}
 
 # ── 헤더 ─────────────────────────────────────────────────────
 _h_col1, _h_col2 = st.columns([6, 1])
@@ -103,46 +219,138 @@ with col_left:
             "두 가지 방법 중 편한 쪽으로 업로드:\n"
             "• 방법 1: DEMO/DRUG/EVENT/ASSESSMENT.txt를 압축한 ZIP 파일 1개\n"
             "• 방법 2: 개별 .txt 파일들을 Ctrl/Cmd+클릭으로 여러 개 선택, 또는 드래그앤드롭\n\n"
-            "필수: DEMO.txt, DRUG.txt, EVENT.txt / 선택: ASSESSMENT.txt, DRUG1/2/3.txt"
+            "필수: DEMO.txt, DRUG.txt, EVENT.txt / 선택: ASSESSMENT.txt, DRUG1/2/3.txt\n"
+            "권장: README.txt 포함 시 품목기준코드·보고기간 자동 입력"
         )
     )
 
-    st.subheader("② 제품 정보 URL")
-    nedrug_url = st.text_input(
-        "식약처 의약품통합정보시스템 URL",
-        placeholder="https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...",
-        key=f"nedrug_url_{_n}",
-        help="nedrug.mfds.go.kr 제품 상세페이지 URL을 붙여넣으세요."
+    # ── README.txt 자동 감지: 품목기준코드/보고기간 선반영 ─────────
+    _readme_info: dict = {}
+    if uploaded_files:
+        _readme_bytes = read_readme_bytes_from_uploads(uploaded_files)
+        if _readme_bytes:
+            _readme_info = parse_readme(_readme_bytes)
+
+        # 업로드 파일셋이 바뀐 시점에만 세션 상태를 강제 갱신 (사용자 수정 보존)
+        _upload_sig = tuple(
+            (f.name, getattr(f, "size", len(f.getvalue()))) for f in uploaded_files
+        )
+        _sig_key = f"_last_upload_sig_{_n}"
+        if _readme_info and st.session_state.get(_sig_key) != _upload_sig:
+            st.session_state[_sig_key] = _upload_sig
+            if _readme_info.get("item_code"):
+                st.session_state[f"api_code_{_n}"] = _readme_info["item_code"]
+                st.session_state[f"drug_code_{_n}"] = _readme_info["item_code"]
+                st.session_state[f"search_mode_{_n}"] = "품목기준코드로 조회"
+            if _readme_info.get("start_date"):
+                st.session_state[f"start_{_n}"] = _readme_info["start_date"]
+            if _readme_info.get("end_date"):
+                st.session_state[f"end_{_n}"] = _readme_info["end_date"]
+
+        if _readme_info:
+            _msgs = []
+            if _readme_info.get("item_code"):
+                _msgs.append(f"품목기준코드 `{_readme_info['item_code']}`")
+            if _readme_info.get("start_date") and _readme_info.get("end_date"):
+                _msgs.append(
+                    f"보고기간 `{_readme_info['start_date']} ~ {_readme_info['end_date']}`"
+                )
+            if _msgs:
+                st.info("📑 **README.txt 자동 감지** — " + ", ".join(_msgs))
+
+    st.subheader("② 제품 정보 조회")
+    search_mode = st.radio(
+        "조회 방식",
+        ["품목기준코드로 조회", "제품명으로 검색", "nedrug URL (기존 방식)"],
+        horizontal=True,
+        key=f"search_mode_{_n}",
+        help="공공데이터포털 API를 통해 조회합니다. nedrug URL 방식은 해외 서버에서 차단될 수 있습니다."
     )
 
-    # URL에서 제품 정보 자동 조회
     product: ProductInfo | None = None
-    if nedrug_url and nedrug_url.startswith("http"):
-        # 항상 브라우저에서 직접 열기 링크 제공 (스크래핑 성공 여부 무관)
-        st.markdown(
-            f'🔗 **[nedrug 페이지를 브라우저에서 직접 열기]({nedrug_url})** '
-            "(새 탭) — 스크래핑이 실패하면 여기서 직접 확인 후 오른쪽에 복사·붙여넣기"
+
+    if search_mode == "품목기준코드로 조회":
+        _api_code = st.text_input(
+            "품목기준코드 입력",
+            placeholder="예: 201506668",
+            key=f"api_code_{_n}",
+            help="의약품 품목기준코드(숫자)를 입력하면 공공데이터포털 API로 조회합니다."
         )
-        with st.spinner("제품 정보 조회 중..."):
-            try:
-                product = scrape_product_info(nedrug_url)
-                if product.item_name:
-                    st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
-                elif product.item_seq:
-                    st.info(
-                        f"ℹ️ **품목기준코드 {product.item_seq}** 는 URL에서 자동 추출됐습니다.\n\n"
-                        "☝️ 위 링크를 눌러 nedrug 페이지를 열고 **제품명·회사명·허가일**을 "
-                        "복사해 오른쪽 필드에 붙여넣으세요. (Streamlit Cloud는 미국 서버라 "
-                        "한국 정부 사이트 직접 접속이 방화벽에 막혀 있습니다.)"
-                    )
-                else:
-                    st.warning("URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
-                # 네트워크 차단 경고는 이미 info로 표시했으므로, 중복 표시 최소화
-                if product and not product.item_seq:
-                    for w in product.warnings:
-                        st.warning(w)
-            except Exception as e:
-                st.error(f"제품 정보 조회 실패: {e}")
+        if _api_code and _api_code.strip():
+            with st.spinner("공공데이터포털 API 조회 중..."):
+                try:
+                    product = lookup_product_info(item_seq=_api_code.strip())
+                    if product and product.item_name:
+                        st.success(f"✅ API 조회 완료: **{product.item_name}** ({product.company_name})")
+                    elif product and product.warnings:
+                        for w in product.warnings:
+                            st.warning(w)
+                    else:
+                        st.warning("해당 품목기준코드로 조회된 결과가 없습니다. 오른쪽에서 직접 입력하세요.")
+                except Exception as e:
+                    st.error(f"API 조회 실패: {e}")
+
+    elif search_mode == "제품명으로 검색":
+        _api_name = st.text_input(
+            "제품명 입력",
+            placeholder="예: 프로테조밉주",
+            key=f"api_name_{_n}",
+            help="제품명(일부 가능)을 입력하면 검색 결과를 표시합니다."
+        )
+        if _api_name and _api_name.strip():
+            with st.spinner("공공데이터포털 API 검색 중..."):
+                try:
+                    results = search_drug_by_name(_api_name.strip(), num_of_rows=10)
+                    if results:
+                        options = {
+                            f"{r.item_name} — {r.company_name} (코드: {r.item_seq})": r
+                            for r in results if r.item_name
+                        }
+                        if options:
+                            selected_label = st.selectbox(
+                                f"검색 결과 ({len(options)}건)",
+                                list(options.keys()),
+                                key=f"api_results_{_n}",
+                            )
+                            product = options[selected_label]
+                            st.success(f"✅ 선택: **{product.item_name}**")
+                        else:
+                            st.warning("검색 결과가 없습니다.")
+                    else:
+                        st.warning("검색 결과가 없습니다. 제품명을 다시 확인하세요.")
+                except Exception as e:
+                    st.error(f"API 검색 실패: {e}")
+
+    else:
+        nedrug_url = st.text_input(
+            "식약처 의약품통합정보시스템 URL",
+            placeholder="https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...",
+            key=f"nedrug_url_{_n}",
+            help="nedrug.mfds.go.kr 제품 상세페이지 URL을 붙여넣으세요. (해외 서버에서 차단될 수 있음)"
+        )
+        if nedrug_url and nedrug_url.startswith("http"):
+            st.markdown(
+                f'🔗 **[nedrug 페이지를 브라우저에서 직접 열기]({nedrug_url})** '
+                "(새 탭) — 스크래핑이 실패하면 여기서 직접 확인 후 오른쪽에 복사·붙여넣기"
+            )
+            with st.spinner("제품 정보 조회 중..."):
+                try:
+                    product = scrape_product_info(nedrug_url)
+                    if product.item_name:
+                        st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
+                    elif product.item_seq:
+                        st.info(
+                            f"ℹ️ **품목기준코드 {product.item_seq}** 는 URL에서 자동 추출됐습니다.\n\n"
+                            "☝️ 위 링크를 눌러 nedrug 페이지를 열고 **제품명·회사명·허가일**을 "
+                            "복사해 오른쪽 필드에 붙여넣으세요."
+                        )
+                    else:
+                        st.warning("URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
+                    if product and not product.item_seq:
+                        for w in product.warnings:
+                            st.warning(w)
+                except Exception as e:
+                    st.error(f"제품 정보 조회 실패: {e}")
 
 with col_right:
     st.subheader("③ 분석 기간")
@@ -203,7 +411,7 @@ with col_right:
     )
     approval_number = st.text_input(
         "허가번호",
-        value=product.item_seq if product else "",
+        value=(product.approval_number or product.item_seq) if product else "",
         key=f"appr_num_{_n}",
     )
 
@@ -211,9 +419,9 @@ with col_right:
 st.divider()
 ready = bool(uploaded_files)
 if ready:
-    _n = len(uploaded_files)
+    n_uploaded = len(uploaded_files)
     _names = ", ".join(f.name for f in uploaded_files)
-    st.success(f"📂 {_n}개 파일 업로드됨: {_names}")
+    st.success(f"📂 {n_uploaded}개 파일 업로드됨: {_names}")
 else:
     st.info("원시자료 ZIP 또는 개별 .txt 파일을 업로드하면 보고서 생성이 활성화됩니다.")
 
@@ -317,44 +525,17 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
 
             progress.progress(100, text="완료!")
 
-        # ── STEP 5: 결과 표시 ─────────────────────────────────
-        st.success(
-            f"✅ 생성 완료 — 이상사례 **{len(ll_df)}건** / 사례 **{n_cases}건**"
-        )
-
-        col_dl1, col_dl2 = st.columns(2)
-        with col_dl1:
-            st.download_button(
-                label="📊 원시자료 분석 엑셀 다운로드",
-                data=xlsx_bytes,
-                file_name=f"{drug_name_final}_원시자료분석_{start_date}_{end_date}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
-        with col_dl2:
-            st.download_button(
-                label="📄 안전관리보고서 Word 다운로드",
-                data=docx_bytes,
-                file_name=f"안전관리보고서_{drug_name_final}_{start_date}_{end_date}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-            )
-
-        # ── 다음 단계 안내 ─────────────────────────────────────
-        st.info(
-            "📝 **다음 단계:** Word 파일을 열어 **노란색 하이라이트** 항목(연간 판매량 등)을 "
-            "직접 입력하고, **[검토필요:]** 표시 항목을 검토하세요."
-        )
-
-        # 경고 로그
-        if warnings_log:
-            with st.expander(f"⚠️ 처리 경고 {len(warnings_log)}건"):
-                for w in warnings_log:
-                    st.warning(w)
-        if unknown_codes:
-            with st.expander(f"🔴 미확인 코드 {len(unknown_codes)}건"):
-                for uc in unknown_codes:
-                    st.error(f"{uc['col']}: {uc['code']}")
+        # 생성 결과를 세션에 보관하여 다운로드 버튼이 리렌더 후에도 유지되도록 처리
+        st.session_state.generated_result = {
+            "xlsx_bytes": xlsx_bytes,
+            "docx_bytes": docx_bytes,
+            "xlsx_name": f"{drug_name_final}_원시자료분석_{start_date}_{end_date}.xlsx",
+            "docx_name": f"안전관리보고서_{drug_name_final}_{start_date}_{end_date}.docx",
+            "n_events": len(ll_df),
+            "n_cases": n_cases,
+            "warnings_log": warnings_log,
+            "unknown_codes": unknown_codes,
+        }
 
     except ValidationError as e:
         progress.progress(0)
@@ -363,3 +544,102 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
         progress.progress(0)
         st.error(f"❌ 처리 오류: {e}")
         raise
+
+# ── 다운로드 영역 (고정) ─────────────────────────────────────
+if st.session_state.generated_result:
+    result = st.session_state.generated_result
+    st.success(f"✅ 생성 완료 — 이상사례 **{result['n_events']}건** / 사례 **{result['n_cases']}건**")
+
+    st.subheader("⑤ 다운로드")
+    col_dl1, col_dl2 = st.columns(2)
+    with col_dl1:
+        st.markdown(
+            make_download_anchor(
+                result["xlsx_bytes"],
+                result["xlsx_name"],
+                "📊 원시자료 분석 엑셀 다운로드",
+                MIME_XLSX,
+            ),
+            unsafe_allow_html=True,
+        )
+    with col_dl2:
+        st.markdown(
+            make_download_anchor(
+                result["docx_bytes"],
+                result["docx_name"],
+                "📄 안전관리보고서 Word 다운로드",
+                MIME_DOCX,
+            ),
+            unsafe_allow_html=True,
+        )
+
+    st.info(
+        "📝 **다음 단계:** Word 파일을 열어 **노란색 하이라이트** 항목(연간 판매량 등)을 "
+        "직접 입력하고, **[검토필요:]** 표시 항목을 검토하세요."
+    )
+
+    if result["warnings_log"]:
+        with st.expander(f"⚠️ 처리 경고 {len(result['warnings_log'])}건"):
+            for w in result["warnings_log"]:
+                st.warning(w)
+    if result["unknown_codes"]:
+        with st.expander(f"🔴 미확인 코드 {len(result['unknown_codes'])}건"):
+            for uc in result["unknown_codes"]:
+                st.error(f"{uc['col']}: {uc['code']}")
+
+    # ── ⑥ 수정본 업로드/보관 ─────────────────────────────────
+    st.divider()
+    st.subheader("⑥ 수정본 업로드 (선택)")
+    st.caption(
+        "노란색 하이라이트/검토필요 항목을 수정한 최종본 엑셀·워드 파일을 올려두면, "
+        "새로고침 전까지 세션에 보관되어 다시 다운로드할 수 있습니다."
+    )
+
+    up_col1, up_col2 = st.columns(2)
+    with up_col1:
+        edited_xlsx = st.file_uploader(
+            "수정본 엑셀 업로드 (.xlsx)",
+            type=["xlsx", "xlsm", "xls"],
+            key=f"edited_xlsx_up_{_n}",
+        )
+        if edited_xlsx is not None:
+            st.session_state.edited_files["xlsx"] = {
+                "bytes": edited_xlsx.getvalue(),
+                "name": edited_xlsx.name,
+            }
+        _saved_xlsx = st.session_state.edited_files.get("xlsx")
+        if _saved_xlsx:
+            st.success(f"📁 보관 중: **{_saved_xlsx['name']}**")
+            st.markdown(
+                make_download_anchor(
+                    _saved_xlsx["bytes"],
+                    _saved_xlsx["name"],
+                    f"⬇️ {_saved_xlsx['name']} 다시 다운로드",
+                    MIME_XLSX,
+                ),
+                unsafe_allow_html=True,
+            )
+
+    with up_col2:
+        edited_docx = st.file_uploader(
+            "수정본 워드 업로드 (.docx)",
+            type=["docx", "doc"],
+            key=f"edited_docx_up_{_n}",
+        )
+        if edited_docx is not None:
+            st.session_state.edited_files["docx"] = {
+                "bytes": edited_docx.getvalue(),
+                "name": edited_docx.name,
+            }
+        _saved_docx = st.session_state.edited_files.get("docx")
+        if _saved_docx:
+            st.success(f"📁 보관 중: **{_saved_docx['name']}**")
+            st.markdown(
+                make_download_anchor(
+                    _saved_docx["bytes"],
+                    _saved_docx["name"],
+                    f"⬇️ {_saved_docx['name']} 다시 다운로드",
+                    MIME_DOCX,
+                ),
+                unsafe_allow_html=True,
+            )

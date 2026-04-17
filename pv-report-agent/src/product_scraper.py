@@ -1,9 +1,11 @@
 """
-식약처 의약품통합정보시스템(nedrug)에서 제품 정보를 스크래핑.
-URL 형식: https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...
+식약처 의약품 제품 정보 조회 모듈.
 
-주의: nedrug는 한국 외부 IP에서 접속 차단/타임아웃될 수 있음 (ECONNRESET).
-실패 시 URL의 cacheSeq에서 품목기준코드만 추출되며, 나머지 필드는 수동 입력 필요.
+두 가지 조회 방식을 지원:
+1. 공공데이터포털 REST API (DrugPrdtPrmsnInfoService07) — 안정적, 해외 서버 OK
+2. nedrug.mfds.go.kr HTML 스크래핑 — 한국 외부 IP에서 차단될 수 있음 (fallback)
+
+공공데이터포털 API를 우선 사용하고, 실패 시 nedrug 스크래핑으로 대체합니다.
 """
 import json
 import re
@@ -14,6 +16,9 @@ import urllib.request
 import urllib.parse
 from dataclasses import dataclass, field
 
+_DATA_GO_KR_KEY = "78dd2db3fe72d72859ddac4b14b20240198fb736aebc531227e72a6f14d8783b"
+_DATA_GO_KR_BASE = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07"
+
 
 @dataclass
 class ProductInfo:
@@ -22,13 +27,172 @@ class ProductInfo:
     approval_date: str = ""
     item_seq: str = ""              # 품목기준코드 (= 의약품 코드)
     atc_code: str = ""
-    ingredient_name: str = ""       # 한글 성분명 (ingrMainName JSON 필드)
-    ingredient_name_en: str = ""    # 영문 성분명 (ATC코드 괄호)
+    ingredient_name: str = ""       # 한글 성분명
+    ingredient_name_en: str = ""    # 영문 성분명
     standard_code: str = ""
     storage: str = ""
     use_period: str = ""
+    approval_number: str = ""       # 허가번호 (품목허가번호)
+    rare_drug_yn: str = ""          # 희귀의약품 여부
+    narcotic_kind_code: str = ""    # 마약류 구분
     source_url: str = ""
+    source_method: str = ""         # "api" 또는 "scrape"
     warnings: list = field(default_factory=list)
+
+
+def _strip_code_prefix(text: str) -> str:
+    """공공데이터포털 API 응답에서 '[M123456]' 형태의 코드 접두사 제거."""
+    return re.sub(r"\[M\d+\]", "", text).strip()
+
+
+def _call_api(endpoint: str, params: dict, retries: int = 3, timeout: int = 15) -> tuple[dict | None, str]:
+    """공공데이터포털 API 호출. (parsed_json, error_msg) 반환."""
+    params = {**params, "serviceKey": _DATA_GO_KR_KEY, "type": "json"}
+    url = f"{_DATA_GO_KR_BASE}/{endpoint}?{urllib.parse.urlencode(params, quote_via=urllib.parse.quote)}"
+    last_err = ""
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode("utf-8"))
+                return data, ""
+        except (urllib.error.URLError, socket.timeout, ConnectionError, OSError) as e:
+            last_err = f"{type(e).__name__}: {e}"
+            if attempt < retries - 1:
+                time.sleep(0.5 * (attempt + 1))
+        except json.JSONDecodeError as e:
+            last_err = f"JSONDecodeError: {e}"
+            break
+        except Exception as e:
+            last_err = f"{type(e).__name__}: {e}"
+            break
+    return None, last_err
+
+
+def _extract_items(resp: dict) -> list[dict]:
+    """공공데이터포털 API 응답에서 item 목록 추출."""
+    body = resp.get("body", {})
+    items = body.get("items", [])
+    if isinstance(items, dict):
+        item = items.get("item", [])
+        return item if isinstance(item, list) else [item] if item else []
+    if isinstance(items, list):
+        return items
+    return []
+
+
+def _item_to_product_info(item: dict) -> ProductInfo:
+    """API 응답의 단일 item → ProductInfo 변환."""
+    info = ProductInfo(source_method="api")
+    info.item_name = (item.get("ITEM_NAME") or "").strip()
+    info.company_name = (item.get("ENTP_NAME") or "").strip()
+    info.item_seq = (item.get("ITEM_SEQ") or "").strip()
+    info.approval_date = (item.get("ITEM_PERMIT_DATE") or "").strip()
+    info.approval_number = (item.get("PERMIT_KIND_CODE") or item.get("PRDUCT_PRMISN_NO") or "").strip()
+    info.storage = (item.get("STORAGE_METHOD") or "").strip()
+    info.use_period = (item.get("VALID_TERM") or "").strip()
+    info.standard_code = (item.get("BAR_CODE") or "").strip()
+    info.rare_drug_yn = (item.get("RARE_DRUG_YN") or "").strip()
+    info.narcotic_kind_code = (item.get("NARCOTIC_KIND_CODE") or "").strip()
+
+    main_ingr = _strip_code_prefix(item.get("MAIN_ITEM_INGR") or "")
+    info.ingredient_name = main_ingr
+
+    ingr_eng = _strip_code_prefix(item.get("INGR_NAME") or item.get("MAIN_INGR_ENG") or "")
+    info.ingredient_name_en = ingr_eng
+
+    atc = (item.get("ATC_CODE") or "").strip()
+    info.atc_code = atc
+
+    return info
+
+
+def search_drug_by_name(item_name: str, num_of_rows: int = 10) -> list[ProductInfo]:
+    """제품명으로 의약품 허가 목록 검색 (공공데이터포털 API)."""
+    resp, err = _call_api("getDrugPrdtPrmsnInq07", {
+        "item_name": item_name,
+        "numOfRows": str(num_of_rows),
+        "pageNo": "1",
+    })
+    if resp is None:
+        return []
+    items = _extract_items(resp)
+    return [_item_to_product_info(it) for it in items]
+
+
+def get_drug_detail_by_code(item_seq: str) -> ProductInfo | None:
+    """품목기준코드로 의약품 상세정보 조회 (공공데이터포털 API)."""
+    resp, err = _call_api("getDrugPrdtPrmsnDtlInq06", {
+        "item_seq": item_seq,
+        "numOfRows": "1",
+        "pageNo": "1",
+    })
+    if resp is None:
+        return None
+    items = _extract_items(resp)
+    if not items:
+        return None
+    return _item_to_product_info(items[0])
+
+
+def get_drug_ingredients(item_seq: str) -> list[dict]:
+    """품목기준코드로 주성분 상세정보 조회 (공공데이터포털 API)."""
+    resp, err = _call_api("getDrugPrdtMcpnDtlInq07", {
+        "item_seq": item_seq,
+        "numOfRows": "50",
+        "pageNo": "1",
+    })
+    if resp is None:
+        return []
+    return _extract_items(resp)
+
+
+def _enrich_ingredients(info: ProductInfo) -> None:
+    """주성분 상세 API를 호출하여 ProductInfo의 성분명을 보강."""
+    if not info.item_seq:
+        return
+    ingredients = get_drug_ingredients(info.item_seq)
+    if not ingredients:
+        return
+    names_ko = []
+    names_en = []
+    for ingr in ingredients:
+        ko = _strip_code_prefix(ingr.get("INGR_NAME") or ingr.get("MAIN_INGR_KOR") or "")
+        en = _strip_code_prefix(ingr.get("INGR_ENG_NAME") or ingr.get("MAIN_INGR_ENG") or "")
+        if ko:
+            names_ko.append(ko)
+        if en:
+            names_en.append(en)
+    if names_ko and not info.ingredient_name:
+        info.ingredient_name = ", ".join(names_ko)
+    if names_en and not info.ingredient_name_en:
+        info.ingredient_name_en = ", ".join(names_en)
+
+
+def lookup_product_info(item_seq: str = "", item_name: str = "") -> ProductInfo:
+    """공공데이터포털 API로 제품 정보 조회. 품목기준코드 우선, 없으면 제품명 검색.
+
+    API 실패 시 빈 ProductInfo(경고 포함)를 반환하므로 nedrug fallback과 조합 가능.
+    """
+    info = ProductInfo(source_method="api")
+
+    if item_seq:
+        detail = get_drug_detail_by_code(item_seq)
+        if detail and detail.item_name:
+            detail.source_method = "api"
+            _enrich_ingredients(detail)
+            return detail
+
+    if item_name:
+        results = search_drug_by_name(item_name, num_of_rows=5)
+        if results:
+            best = results[0]
+            best.source_method = "api"
+            _enrich_ingredients(best)
+            return best
+
+    info.warnings.append("품목기준코드 또는 제품명을 입력하세요.")
+    return info
 
 
 def _fetch_html(url: str, retries: int = 3, timeout: int = 20) -> tuple[str, str]:
