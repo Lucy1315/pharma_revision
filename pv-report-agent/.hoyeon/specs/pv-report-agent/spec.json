@@ -1,0 +1,405 @@
+{
+  "meta": {
+    "name": "pv-report-agent",
+    "goal": "KIDS 원시자료(DEMO/DRUG/EVENT txt)와 코드집 엑셀을 업로드하면, 식약처 가이드라인 기반 안전관리책임자가 작성한 안전관리에 관한 자료 Word 문서를 자동 생성하는 Streamlit 웹앱을 구현한다",
+    "type": "dev",
+    "schema_version": "v1",
+    "non_goals": [
+      "외부 API 자동 연동 (글로벌 이상사례 DB 등)",
+      "사용자 계정/인증 관리",
+      "전 세계 허가 현황 자동 수집",
+      "MedDRA 계층 코드(SOC-HLT-PT) 전체 자동 매핑"
+    ],
+    "mode": {
+      "dispatch": "direct",
+      "work": "no-commit",
+      "verify": "light"
+    }
+  },
+  "tasks": [
+    {
+      "id": "T1",
+      "action": "프로젝트 스캐폴딩: 디렉토리 구조, requirements.txt, __init__.py, 공통 타입(ProcessedData dataclass)",
+      "depends_on": [
+        "T0"
+      ],
+      "fulfills": [
+        "R1",
+        "R1",
+        "R1"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:37:46.001Z",
+      "summary": "src/__init__.py, tests/__init__.py, requirements.txt, src/types.py(ProcessedData dataclass) 생성 완료"
+    },
+    {
+      "id": "T2",
+      "action": "validator.py + transformer.py 구현: 파일 읽기/인코딩/검증, 코드→텍스트 변환, REPRT_CHANGE_CD 필터, WHOART SOC 사전",
+      "depends_on": [
+        "T1"
+      ],
+      "fulfills": [
+        "R2",
+        "R1",
+        "R3"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:39:09.140Z",
+      "summary": "validator.py(인코딩감지/컬럼검증/날짜범위) + transformer.py(코드→텍스트 변환/WHOART SOC 매핑/중대성 판단/무효 필터) 구현 완료"
+    },
+    {
+      "id": "T3",
+      "action": "joiner.py 구현: 의약품 코드 자동 감지, DEMO+DRUG+EVENT+ASSESSMENT Left Join, 보수적 필터, 인과성 평가 병합",
+      "depends_on": [
+        "T1"
+      ],
+      "fulfills": [
+        "R3",
+        "R2",
+        "R3"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:39:09.217Z",
+      "summary": "joiner.py(의약품코드자동감지/보수적필터/3테이블LeftJoin/인과성병합/고아데이터경고/LineListingBuilder) 구현 완료"
+    },
+    {
+      "id": "T4",
+      "action": "report_builder.py 구현: Line Listing, SOC/PT 요약표, 인구학적표, 중대성표, 정성 텍스트, Placeholder, 통계 무결성 검증",
+      "depends_on": [
+        "T2",
+        "T3"
+      ],
+      "fulfills": [
+        "R4",
+        "R4"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:40:31.729Z",
+      "summary": "report_builder.py 구현: Line Listing/SOC PT/인구학적/중대성/보고유형 테이블, 정성텍스트 자동생성, 노란Placeholder, 통계무결성검증, [검토필요:] 마커"
+    },
+    {
+      "id": "T5",
+      "action": "app.py Streamlit UI 구현 + main.py CLI 실행기",
+      "depends_on": [
+        "T4"
+      ],
+      "fulfills": [
+        "R5",
+        "R5"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:41:28.985Z",
+      "summary": "app.py(Streamlit UI: 파일업로드/자동코드감지/진행표시/다운로드/경고로그) + main.py(CLI 실행기) 구현 완료"
+    },
+    {
+      "id": "T6",
+      "action": "compare.py 구현: docs/files 원시자료로 보고서 생성 후 기존 수작업 보고서와 수치 비교 및 diff 출력",
+      "depends_on": [
+        "T5"
+      ],
+      "fulfills": [
+        "R6",
+        "R6"
+      ],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:42:23.560Z",
+      "summary": "compare.py 구현 및 실행: 이상사례 총건수/인원/성별/중대성/Line Listing 모두 수작업 보고서와 일치(✅8개 항목). 테이블 수 차이(17→6)는 원본의 빈 구분자 테이블로 기능상 동일"
+    },
+    {
+      "id": "T0",
+      "action": "CLAUDE.md + .claude/rules/domain.md 생성: KIDS 데이터 구조, 비즈니스 룰, 식약처 가이드라인 핵심 요약",
+      "fulfills": [
+        "R7"
+      ],
+      "depends_on": [],
+      "type": "work",
+      "status": "done",
+      "completed_at": "2026-04-17T12:37:25.326Z",
+      "summary": "CLAUDE.md(도메인 컨텍스트/비즈니스룰) + .claude/rules/domain.md(WHOART SOC 매핑/마커 규칙) 생성 완료"
+    }
+  ],
+  "context": {
+    "confirmed_goal": "KIDS 원시자료(DEMO/DRUG/EVENT txt, pipe 구분자)와 코드집 엑셀을 Streamlit UI에 업로드하면, 식약처 품목갱신 가이드라인(99~115p) 기반 '안전관리책임자가 작성한 안전관리에 관한 자료' Word 문서(.docx)를 자동 생성·다운로드할 수 있다. 데이터 검증 게이트, REPRT_CHANGE_CD==1 필터링, 의심/병용/상호작용 보수적 통합, Line Listing + SOC별 요약표, Placeholder 삽입, 통계 무결성 검증을 포함한다.",
+    "research": [
+      "KIDS 원시자료는 DEMO/DRUG/EVENT/ASSESSMENT/DRUG1/DRUG2/DRUG3 txt 파일로 구성, pipe(|) 구분자, EUC-KR 또는 UTF-8 인코딩",
+      "DEMO.txt 핵심 컬럼: KAERS_NO, RPT_DL_DT, FIRST_OCCR_DT, REPRT_CHANGE_CD(1=삭제), PTNT_SEX(1=남/2=여), PTNT_OCCURSYMT_AGE, PTNT_AGRDE, RPT_TY(1=자발/2=시험연구/3=기타/4=모름), QCK_RPT_YN(Y=신속보고)",
+      "DRUG.txt 핵심 컬럼: KAERS_NO, DRUG_SEQ, DRUG_GB(1=의심/2=병용/3=상호작용/4=비투여), DRUG_CD(의약품 코드), DRUG_ACTION(1=투여중지/2=감소/3=증가/4=유지/0=모름/9=해당없음)",
+      "EVENT.txt 핵심 컬럼: KAERS_NO, ADR_SEQ, ADR_MEDDRA_KOR_NM, ADR_MEDDRA_ENG_NM, ADR_START_DT, ADR_END_DT, ADR_RESULT_CODE(1=회복됨/2=회복중/3=회복안됨/4=후유증/5=치명적/0=알려지지않음), WHOART_ARRN(SOC 그룹핑용), 중대성 SE_* 컬럼 6개",
+      "ASSESSMENT.txt 핵심 컬럼: KAERS_NO, DRUG_SEQ, ADR_SEQ, EVALT_RESULT_CODE(1=확실함/2=상당히확실함/3=가능함/4=가능성적음/5=평가곤란/6=평가불가) — 인과성 평가",
+      "코드집 엑셀: 시트 '일괄보고 공통코드'에 DEMO/EVENT/DRUG/ASSESSMENT 공통코드 포함. 'EDQM코드'에 제형/투여경로 EDQM 코드 포함. '성분코드'에 성분 코드 포함",
+      "기존 Word 문서 구조: 표지→회사정보표(Table1)→1.요약→2.상세(2.1약물감시절차/2.2갱신대상품목안전관리자료[가.신속보고/나.정기보고/다.수집대상정보(ㄱ보고건수/ㄴ인구학적/ㄷ이상사례현황/ㄹ허가사항비교/ㅁ허가외이상사례/ㅂ검토)])",
+      "보고유형표(Table3): 시험연구/자발/기타 × 일반/신속 교차표. 인구학적표(Table4): 성별/연령대. 이상사례현황표(Table5): SOC/PT × 전체건수/비율/중대성건수. 중대성표(Table6): YES/NO. Line Listing(Table7): 번호/KAERS번호/인과성평가/이상사례명/발현일/종료일/경과/중대성",
+      "WHOART_ARRN 코드를 SOC 명칭으로 매핑하는 별도 테이블 없음 — 이상사례명에서 키워드 추출 또는 하드코딩 필요",
+      "분석 대상 의약품코드: DRUG_CD 컬럼에서 사용자 입력 코드와 매칭, DRUG_GB 1/2/3 포함(보수적 모드)",
+      "중대성 판단: SE_DEATH/SE_LIFE_MENACE/SE_HSPTLZ_EXTN/SE_FNCT_DGRD/SE_ANMLY/SE_ETC_IMPRTNC_SITTN 중 하나라도 Y이면 중대성 YES",
+      "인과성평가: ASSESSMENT.txt에서 DRUG_SEQ가 자사 의약품의 DRUG_SEQ인 건의 EVALT_RESULT_CODE 사용. 해당 DRUG_SEQ 없으면 '평가 없음'"
+    ],
+    "decisions": [
+      {
+        "id": "D1",
+        "decision": "WHOART_ARRN 코드를 기관계대분류(SOC) 명칭으로 변환하기 위해 코드→명칭 매핑 사전(dict)을 코드에 하드코딩한다",
+        "rationale": "코드집 엑셀에 WHOART SOC 코드 매핑이 없으므로 별도 파일 없이 안정적으로 동작하는 하드코딩 방식 선택. 대안(키워드 추론)은 정확도 불안정, 별도 파일 업로드는 사용자 부담 증가로 제외"
+      },
+      {
+        "id": "D2",
+        "decision": "분석 대상 의약품 코드를 DRUG.txt에서 자동 감지한다. 가장 빈번하게 등장하는 DRUG_CD를 기본값으로 제안하고 사용자가 사이드바에서 확인/수정할 수 있다",
+        "rationale": "사용자가 매번 코드를 외워서 입력하는 불편 제거. 자동 감지 후 확인 단계를 두어 다수 품목 파일 혼재 시에도 안전하게 처리. 순수 수동 입력 대비 UX 향상"
+      },
+      {
+        "id": "D3",
+        "decision": "Line Listing에서 1사례(환자) × 다중 이상사례는 이상사례별 1행으로 분리하여 표시한다",
+        "rationale": "기존 수작업 보고서 포맷과 동일. 1환자 1행 방식 대비 이상사례 건수 집계 정확도 보장. 식약처 가이드라인 예시 표와 일치"
+      },
+      {
+        "id": "D4",
+        "decision": "ASSESSMENT.txt 미제공 시 인과성 평가 컬럼을 공백으로 두고, 경고 로그에 기록한다. 보고서 생성은 계속 진행된다",
+        "rationale": "인과성 정보 없어도 이상사례 자체는 유효. 하드 에러로 중단 시 사용자 불편 증가. 경고 로그로 투명하게 알림"
+      },
+      {
+        "id": "D5",
+        "decision": "보고서의 정성적 텍스트 섹션(보고 건수, 인구학적 자료, 이상사례 발현 현황 등)을 수치 기반으로 자동 생성한다",
+        "rationale": "수작업 보고서에서 가장 시간이 소요되는 부분. 집계 수치(건수, 비율, 주요 이상사례 top3 등)에서 한국어 문장을 자동 조합. 외부 LLM 미사용, 순수 template 방식으로 재현성 보장"
+      },
+      {
+        "id": "D6",
+        "decision": "로컬 환경에서 streamlit run 명령어로 실행. 클라우드 배포 미지원",
+        "rationale": "KIDS 원시자료는 민감 의료 데이터로 외부 서버 전송 불가. 로컬 실행으로 데이터 보안 보장. 클라우드(Streamlit Cloud) 대비 데이터 보호 우선"
+      },
+      {
+        "id": "D7",
+        "decision": "분석에 사용하는 파일은 DEMO.txt, DRUG.txt, EVENT.txt, ASSESSMENT.txt(선택) 4종으로 제한한다. DRUG1/DRUG2/DRUG3 등 추가 파일은 이번 버전에서 미사용",
+        "rationale": "Line Listing 및 요약표 생성에 필요한 컬럼은 4개 파일에 모두 포함됨. DRUG1/2/3은 성분/투여량 상세 정보로 현 보고서 양식에서 불필요. 최소 파일 업로드로 사용성 향상"
+      },
+      {
+        "id": "D8",
+        "decision": "유효 이상사례 0건인 경우 st.warning으로 경고를 표시하고 보고서 생성은 계속하여 빈 표가 포함된 Word 파일을 출력한다",
+        "rationale": "갱신 기간 내 0건도 유효한 보고 결과. 에러 중단 시 사용자가 '왜 안 되는지' 혼란. 빈 표 포함 문서 출력으로 '보고 내역 없음' 명시 가능"
+      },
+      {
+        "id": "D9",
+        "decision": "Word 보고서에 표시할 의약품명, 회사명, 성분명, 허가일 등 제품 메타 정보는 사이드바 텍스트 입력 필드로 직접 입력받는다",
+        "rationale": "DRUG_CD로 제품명을 자동 조회하는 코드집 시트 없음. 회사마다 내부 제품 정보가 다름. 사이드바 입력이 가장 유연하고 정확. 기본값으로 마지막 입력값 캐싱 가능(session_state)"
+      },
+      {
+        "id": "D10",
+        "decision": "인과성 평가는 ASSESSMENT.txt에서 자사 의약품 DRUG_SEQ와 매칭되는 레코드의 EVALT_RESULT_CODE를 사용하며, 동일 KAERS_NO+ADR_SEQ에 대해 자사 의약품 DRUG_SEQ가 여러 개인 경우 첫 번째 의심약물(DRUG_GB=1) DRUG_SEQ 기준을 우선 적용한다",
+        "rationale": "의심약물(DRUG_GB=1)이 자사 제품인 경우가 인과성 평가의 주 대상. 병용/상호작용 DRUG_SEQ의 인과성보다 의심 약물 인과성이 보고서에 더 적절"
+      },
+      {
+        "id": "D5-revised",
+        "decision": "정성 텍스트 자동 생성 시 수용 품질 기준: 수치(건수, 비율)는 100% 정확해야 하고, 문장 구조는 기존 수작업 보고서의 표현 패턴을 템플릿으로 사용. 식약처 심사관 신뢰도 우려는 최종 문장을 사용자가 검토·수정할 수 있도록 Word 문서로 출력하는 것으로 해소",
+        "rationale": "기존 수작업 보고서 문장 패턴 재사용으로 어색함 최소화. LLM 미사용으로 재현성 보장. 사용자가 Word에서 최종 편집 가능하므로 자동생성 품질 우려 해소"
+      },
+      {
+        "id": "D11",
+        "decision": "D2(자동감지 DRUG_CD) ↔ D9(수동입력 제품명) 불일치 방지: 사이드바에서 선택된 DRUG_CD를 제품명 입력 필드 옆에 항상 표시하여 사용자가 코드-명칭 일치 여부를 직접 확인할 수 있도록 한다",
+        "rationale": "코드-명칭 매핑 DB가 없으므로 사용자 검증이 유일한 안전망. 코드를 눈에 보이게 표시하여 오입력 예방"
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "behavior": "사용자가 KIDS 원시자료 파일을 업로드하면 시스템이 검증하고 무효 데이터를 제거한다",
+      "sub": [
+        {
+          "id": "R1.1",
+          "behavior": "EUC-KR/UTF-8 인코딩 자동 감지로 파일 읽기 성공",
+          "given": "pipe 구분자 txt 파일이 EUC-KR 또는 UTF-8로 인코딩됨",
+          "when": "validator.read_file(path) 호출",
+          "then": "인코딩 무관하게 DataFrame 반환 성공"
+        },
+        {
+          "id": "R1.2",
+          "behavior": "KAERS_NO 컬럼 누락 시 즉시 실행 차단",
+          "given": "DEMO.txt에 KAERS_NO 컬럼이 없음",
+          "when": "validator.validate_columns(df) 호출",
+          "then": "ValidationError 발생, 처리 중단"
+        },
+        {
+          "id": "R1.3",
+          "behavior": "REPRT_CHANGE_CD==1 무효 건 필터링",
+          "given": "DEMO DataFrame에 REPRT_CHANGE_CD==1인 행 포함",
+          "when": "transformer.filter_invalid(demo_df) 호출",
+          "then": "REPRT_CHANGE_CD==1 행 제거, 나머지 반환"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "behavior": "DRUG.txt에서 분석 대상 의약품 코드를 자동 감지하고 사용자가 확인한다",
+      "sub": [
+        {
+          "id": "R2.1",
+          "behavior": "DRUG.txt에서 가장 빈번한 DRUG_CD를 기본값으로 감지",
+          "given": "DRUG.txt에 201506668 코드가 가장 많이 등장",
+          "when": "joiner.detect_drug_code(drug_df) 호출",
+          "then": "'201506668' 반환"
+        },
+        {
+          "id": "R2.2",
+          "behavior": "사이드바에서 코드 확인 및 수정 가능",
+          "given": "자동 감지된 코드 '201506668'",
+          "when": "사용자가 사이드바 입력 필드에서 코드 확인",
+          "then": "선택 코드가 세션 상태에 저장됨"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "behavior": "코드집 기반 변환 및 3개 테이블 보수적 병합",
+      "sub": [
+        {
+          "id": "R3.1",
+          "behavior": "성별/연령대/이상사례결과 코드를 한글 텍스트로 변환",
+          "given": "PTNT_SEX=1, PTNT_AGRDE=6, ADR_RESULT_CODE=1",
+          "when": "transformer.transform(df, codebook) 호출",
+          "then": "각각 '남', '65세이상', '회복됨'으로 변환"
+        },
+        {
+          "id": "R3.2",
+          "behavior": "WHOART_ARRN 코드를 SOC 명칭으로 변환 (하드코딩 사전)",
+          "given": "ADR에 WHOART_ARRN=1313",
+          "when": "transformer.map_soc(whoart_code) 호출",
+          "then": "해당 SOC 한글 명칭 반환 (미확인 시 '[미확인코드: 1313]' 반환)"
+        },
+        {
+          "id": "R3.3",
+          "behavior": "자사 의약품 DRUG_GB 1/2/3 포함 보수적 필터링",
+          "given": "DRUG.txt에 자사 코드가 DRUG_GB=1(의심), 2(병용), 3(상호작용)으로 혼재",
+          "when": "joiner.filter_target_drug(drug_df, drug_code) 호출",
+          "then": "DRUG_GB 1/2/3 모두 포함된 KAERS_NO 집합 반환"
+        },
+        {
+          "id": "R3.4",
+          "behavior": "DEMO+DRUG+EVENT Left Join, 고아 데이터 경고 로그",
+          "given": "EVENT에 KAERS_NO='X' 존재, DEMO에 없음",
+          "when": "joiner.join_tables(demo, drug, event, assessment) 호출",
+          "then": "Left Join 완료, 고아 KAERS_NO='X' 경고 로그 출력"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "behavior": "식약처 가이드라인 표준 Word 문서 자동 생성",
+      "sub": [
+        {
+          "id": "R4.1",
+          "behavior": "Line Listing 테이블 생성 (이상사례별 1행)",
+          "given": "1명 환자에 이상사례 3건",
+          "when": "report_builder.build_line_listing(df) 호출",
+          "then": "3행 테이블 생성, 컬럼: 번호/KAERS번호/인과성/이상사례명/발현일/종료일/경과/중대성"
+        },
+        {
+          "id": "R4.2",
+          "behavior": "SOC/PT별 이상사례 요약표 생성",
+          "given": "병합된 DataFrame",
+          "when": "report_builder.build_soc_summary(df) 호출",
+          "then": "기관계대분류별 PT명/전체건수/비율/중대성건수 테이블 생성"
+        },
+        {
+          "id": "R4.3",
+          "behavior": "통계 무결성 검증 - 건수 불일치 시 문서 상단 경고",
+          "given": "DataFrame 건수 23건, Line Listing 행수 22건",
+          "when": "report_builder.build_report() 최종 단계",
+          "then": "Word 문서 첫 장에 굵은 빨간색 경고문 삽입"
+        },
+        {
+          "id": "R4.4",
+          "behavior": "정성 텍스트 수치 기반 자동 생성",
+          "given": "9명 환자, 남 6명, 여 3명, 총 이상사례 23건",
+          "when": "report_builder.generate_narrative(stats) 호출",
+          "then": "'9명의 환자 중 남성은 6명(66.7%)...' 형식 텍스트 생성"
+        },
+        {
+          "id": "R4.5",
+          "behavior": "사내 데이터 필요 섹션은 노란색 Placeholder 삽입",
+          "given": "연간 판매량 정보 없음",
+          "when": "보고서 해당 섹션 작성 시",
+          "then": "노란색 하이라이트 '[이곳에 연간 판매량을 입력하세요]' 텍스트 삽입"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "behavior": "Streamlit UI로 파일 업로드부터 보고서 다운로드까지 워크플로 제공",
+      "sub": [
+        {
+          "id": "R5.1",
+          "behavior": "사이드바에서 4개 파일 업로드 및 기간/코드 입력",
+          "given": "앱 실행",
+          "when": "사용자가 사이드바에서 파일 업로드 및 입력 완료",
+          "then": "모든 필드 채워지면 '보고서 생성' 버튼 활성화"
+        },
+        {
+          "id": "R5.2",
+          "behavior": "진행 상태바 표시 (검증/처리/생성 3단계)",
+          "given": "사용자가 '보고서 생성' 클릭",
+          "when": "파이프라인 실행 중",
+          "then": "st.progress로 단계별 진행률 표시"
+        },
+        {
+          "id": "R5.3",
+          "behavior": "생성 완료 후 Word 파일 다운로드 버튼 표시",
+          "given": "보고서 생성 성공",
+          "when": "파이프라인 완료",
+          "then": "st.download_button으로 .docx 파일 다운로드 가능"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "behavior": "에이전트 생성 보고서와 기존 수작업 보고서의 수치를 비교 검증한다",
+      "sub": [
+        {
+          "id": "R6.1",
+          "behavior": "compare.py가 두 Word 문서의 주요 수치를 자동 추출 비교",
+          "given": "에이전트 생성 docx, 수작업 docx 두 파일 존재",
+          "when": "compare.py 실행",
+          "then": "총 이상사례 건수, 성별 분포, SOC별 건수, Line Listing 건수 비교 결과 출력"
+        },
+        {
+          "id": "R6.2",
+          "behavior": "수치 차이 발견 시 diff 리포트 출력",
+          "given": "Line Listing 건수가 에이전트 23건, 수작업 22건으로 불일치",
+          "when": "compare.py 비교 완료",
+          "then": "불일치 항목 목록과 차이값을 콘솔에 출력"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "behavior": "프로젝트에 CLAUDE.md와 .claude/rules/를 생성하여 Claude Code가 도메인 컨텍스트를 기억한다",
+      "sub": [
+        {
+          "id": "R7.1",
+          "behavior": "CLAUDE.md에 KIDS 데이터 구조, 비즈니스 룰, 식약처 가이드라인 요약 포함",
+          "given": "프로젝트 루트에 CLAUDE.md 없음",
+          "when": "T0 실행",
+          "then": "KIDS 파일 구조, REPRT_CHANGE_CD 필터 룰, DRUG_GB 보수적 필터, 주요 컬럼 설명이 포함된 CLAUDE.md 생성"
+        },
+        {
+          "id": "R7.2",
+          "behavior": "맥락/판단 필요 항목에 [검토필요: 사유] 마커 삽입",
+          "given": "인과성 평가 없음(ASSESSMENT 미제공) 또는 미확인 코드 발생",
+          "when": "report_builder가 해당 셀 작성 시",
+          "then": "해당 셀에 '[검토필요: 인과성 평가 없음]' 또는 '[검토필요: 미확인 코드 XXX]' 텍스트 삽입"
+        }
+      ]
+    }
+  ],
+  "external_dependencies": {
+    "pre_work": [],
+    "post_work": [
+      {
+        "action": "생성된 Word 파일의 정성 텍스트 섹션을 실무자가 직접 검토 및 수정"
+      }
+    ]
+  }
+}

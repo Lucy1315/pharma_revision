@@ -1,0 +1,118 @@
+[
+  {
+    "ts": "2026-04-17T12:13:57.426Z",
+    "type": "spec_created"
+  },
+  {
+    "ts": "2026-04-17T12:14:50.888Z",
+    "type": "spec_updated",
+    "detail": "merged: meta, context"
+  },
+  {
+    "ts": "2026-04-17T12:15:57.679Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:17:46.050Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:18:34.394Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:19:30.733Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:20:36.476Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:21:25.544Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:22:41.638Z",
+    "type": "spec_updated",
+    "detail": "merged: context"
+  },
+  {
+    "ts": "2026-04-17T12:24:04.306Z",
+    "type": "spec_updated",
+    "detail": "merged: requirements"
+  },
+  {
+    "ts": "2026-04-17T12:26:26.143Z",
+    "type": "tasks_changed",
+    "detail": "derive-tasks: 6 stubs"
+  },
+  {
+    "ts": "2026-04-17T12:26:38.441Z",
+    "type": "spec_updated",
+    "detail": "merged: tasks, external_dependencies"
+  },
+  {
+    "ts": "2026-04-17T12:34:38.182Z",
+    "type": "spec_updated",
+    "detail": "merged: requirements"
+  },
+  {
+    "ts": "2026-04-17T12:34:47.459Z",
+    "type": "spec_updated",
+    "detail": "merged: tasks"
+  },
+  {
+    "ts": "2026-04-17T12:35:14.796Z",
+    "type": "spec_updated",
+    "detail": "merged: meta"
+  },
+  {
+    "ts": "2026-04-17T12:37:25.326Z",
+    "type": "task_done",
+    "task": "T0",
+    "summary": "CLAUDE.md(도메인 컨텍스트/비즈니스룰) + .claude/rules/domain.md(WHOART SOC 매핑/마커 규칙) 생성 완료"
+  },
+  {
+    "ts": "2026-04-17T12:37:46.001Z",
+    "type": "task_done",
+    "task": "T1",
+    "summary": "src/__init__.py, tests/__init__.py, requirements.txt, src/types.py(ProcessedData dataclass) 생성 완료"
+  },
+  {
+    "ts": "2026-04-17T12:39:09.140Z",
+    "type": "task_done",
+    "task": "T2",
+    "summary": "validator.py(인코딩감지/컬럼검증/날짜범위) + transformer.py(코드→텍스트 변환/WHOART SOC 매핑/중대성 판단/무효 필터) 구현 완료"
+  },
+  {
+    "ts": "2026-04-17T12:39:09.217Z",
+    "type": "task_done",
+    "task": "T3",
+    "summary": "joiner.py(의약품코드자동감지/보수적필터/3테이블LeftJoin/인과성병합/고아데이터경고/LineListingBuilder) 구현 완료"
+  },
+  {
+    "ts": "2026-04-17T12:40:31.729Z",
+    "type": "task_done",
+    "task": "T4",
+    "summary": "report_builder.py 구현: Line Listing/SOC PT/인구학적/중대성/보고유형 테이블, 정성텍스트 자동생성, 노란Placeholder, 통계무결성검증, [검토필요:] 마커"
+  },
+  {
+    "ts": "2026-04-17T12:41:28.985Z",
+    "type": "task_done",
+    "task": "T5",
+    "summary": "app.py(Streamlit UI: 파일업로드/자동코드감지/진행표시/다운로드/경고로그) + main.py(CLI 실행기) 구현 완료"
+  },
+  {
+    "ts": "2026-04-17T12:42:23.560Z",
+    "type": "task_done",
+    "task": "T6",
+    "summary": "compare.py 구현 및 실행: 이상사례 총건수/인원/성별/중대성/Line Listing 모두 수작업 보고서와 일치(✅8개 항목). 테이블 수 차이(17→6)는 원본의 빈 구분자 테이블로 기능상 동일"
+  }
+]

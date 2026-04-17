@@ -1,0 +1,24 @@
+KAERS_NO|ADR_SEQ|ADR_MEDDRA_KOR_NM|ADR_MEDDRA_ENG_NM|ADR_START_DT|ADR_END_DT|ADR_RESULT_CODE|CLNIC_FACT_CONFIRM_YN|WHOART_ARRN|WHOART_SEQ|SE_DEATH|SE_LIFE_MENACE|SE_HSPTLZ_EXTN|SE_FNCT_DGRD|SE_ANMLY|SE_ETC_IMPRTNC_SITTN
+2020300248843|1|말초 신경 병증|Neuropathy peripheral|20201109||1|Y|1313|001||||||
+2021300151807|1|세균성 감염|Infection bacterial|20190905||2|Y|0738|001|||Y|||
+2021300151807|2|게실염|Diverticulitis||20200103|1|Y|2076|001|||Y|||
+2021300151807|3|인플루엔자-유사 증상|Influenza-like symptoms|20200110|20200114|1|Y|1222|001|||Y|||
+2021300151807|4|허가 외 사용|Off label use|||0|Y|1615|005||||||
+2021300151807|5|흉막 삼출|Pleural effusion|20210622||2|Y|0524|001|||Y|||
+2021300169708|1|세균성 감염|Infection bacterial|20190905||2|Y|0738|001|||Y|||
+2021300169708|2|게실염|Diverticulitis||20200103|1|Y|2076|001|||Y|||
+2021300169708|3|인플루엔자-유사 증상|Influenza-like symptoms|20200110|20200114|1|Y|1222|001|||Y|||
+2021300169708|4|허가 외 사용|Off label use|||0|Y|1615|005||||||
+2021300169708|5|흉막 삼출|Pleural effusion|20210622||2|Y|0524|001|||Y|||
+2021300173572|1|세균성 감염|Infection bacterial|20190905||2|Y|0738|001|||Y|||
+2021300173572|2|게실염|Diverticulitis||20200103|1|Y|2076|001|||Y|||
+2021300173572|3|인플루엔자-유사 증상|Influenza-like symptoms|20200110|20200114|1|Y|1222|001|||Y|||
+2021300173572|4|허가 외 사용|Off label use|||0|Y|1615|005||||||
+2021300173572|5|흉막 삼출|Pleural effusion|20210622||2|Y|0524|001|||Y|||
+2023000567943|1|수포성 병변|Bullous lesions|20230302||1|||||||||
+2023000567943|2|광범위 발진|Widespread rash|20230302||1|||||||||
+2023000894040|1|복통|Abdominal pain|20230331||1|||||||||
+2023001062191|1|신경 병증|Neuropathy|20230515||0||||||Y|||Y
+2023001575367|1|말초 신경 병증|Neuropathy peripheral|20230921|20231116|1|||||||||
+2024000790542|1|다발 골수종 진행|Multiple myeloma progression|20230804||5||||Y||Y|||
+2024000790542|2|COVID-19|COVID-19|20230804|20230811|1|||||||||

@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 생성된 출력 파일
+pv-report-agent/data/output/
+
+# 민감 참조 문서 (대용량 PDF/Excel)
+*.pdf
+프로테조밉주3.5mg 원시자료 분석_기간재설정_20250306.xlsx
+안전관리책임자가 작성한 안전관리에 관한 자료.docx
+[붙임 2] 의약품부작용보고원시자료 코드집.xlsx
+
+# OS
+.DS_Store
+*.xlsx
