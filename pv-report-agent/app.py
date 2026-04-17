@@ -6,7 +6,7 @@ from pathlib import Path
 import streamlit as st
 
 from src.validator import load_and_validate, ValidationError
-from src.transformer import filter_invalid, transform_demo, transform_drug, transform_event, transform_assessment
+from src.transformer import filter_invalid, transform_demo, transform_drug, transform_event, transform_assessment, detect_period
 from src.joiner import detect_drug_code, join_tables, build_line_listing
 from src.report_builder import build_report
 from src.excel_builder import build_excel
@@ -57,16 +57,41 @@ with col_left:
                     st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
                 else:
                     st.warning("제품명을 찾지 못했습니다. 아래에서 직접 입력하세요.")
+                for w in product.warnings:
+                    st.warning(f"조회 경고: {w}")
             except Exception as e:
                 st.error(f"제품 정보 조회 실패: {e}")
 
 with col_right:
     st.subheader("③ 분석 기간")
+
+    # ZIP이 업로드되면 DEMO.txt에서 기간 자동 감지
+    _auto_start, _auto_end = "", ""
+    if zip_file is not None:
+        try:
+            import pandas as _pd
+            with zipfile.ZipFile(io.BytesIO(zip_file.getvalue())) as _zf:
+                _names = {n.split("/")[-1]: n for n in _zf.namelist() if n.endswith("DEMO.txt")}
+                if _names:
+                    _demo_raw = _pd.read_csv(
+                        _zf.open(next(iter(_names.values()))),
+                        sep="|", dtype=str,
+                        encoding_errors="replace",
+                    )
+                    _auto_start, _auto_end = detect_period(_demo_raw)
+                    if _auto_start:
+                        _auto_start = f"{_auto_start[:4]}-{_auto_start[4:6]}-{_auto_start[6:]}"
+                        _auto_end   = f"{_auto_end[:4]}-{_auto_end[4:6]}-{_auto_end[6:]}"
+        except Exception:
+            pass
+
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.text_input("시작일 (YYYY-MM-DD)", value="2020-09-21")
+        start_date = st.text_input("시작일 (YYYY-MM-DD)", value=_auto_start or "2020-09-21",
+                                   help="ZIP의 DEMO.txt에서 자동 감지")
     with col2:
-        end_date = st.text_input("종료일 (YYYY-MM-DD)", value="2024-06-30")
+        end_date = st.text_input("종료일 (YYYY-MM-DD)", value=_auto_end or "2024-06-30",
+                                 help="ZIP의 DEMO.txt에서 자동 감지")
 
     st.subheader("④ 제품 정보 확인/수정")
     drug_code_input = st.text_input(
@@ -114,7 +139,11 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
                 zf.extractall(tmpdir)
 
             # 평탄화: 서브디렉토리 내 txt 파일을 최상위로 이동
-            for txt in list(tmpdir.rglob("*.txt")):
+            txt_files = list(tmpdir.rglob("*.txt"))
+            if not txt_files:
+                st.error("❌ ZIP에 .txt 파일이 없습니다. DEMO.txt, DRUG.txt, EVENT.txt가 포함된 ZIP을 업로드하세요.")
+                st.stop()
+            for txt in txt_files:
                 if txt.parent != tmpdir:
                     dest = tmpdir / txt.name
                     if not dest.exists():

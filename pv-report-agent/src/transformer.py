@@ -3,6 +3,17 @@ import openpyxl
 from pathlib import Path
 
 
+def detect_period(demo_df: pd.DataFrame) -> tuple[str, str]:
+    """DEMO RPT_DL_DT 컬럼에서 분석 기간(시작일, 종료일) 자동 감지. YYYYMMDD 형식 반환."""
+    if "RPT_DL_DT" not in demo_df.columns:
+        return "", ""
+    dates = demo_df["RPT_DL_DT"].dropna().astype(str).str.strip()
+    dates = dates[dates.str.match(r"^\d{8}$")]
+    if dates.empty:
+        return "", ""
+    return dates.min(), dates.max()
+
+
 # ── 공통코드 매핑 ──────────────────────────────────────────
 PTNT_SEX_MAP = {"1": "남", "2": "여"}
 PTNT_AGRDE_MAP = {
@@ -91,6 +102,8 @@ def format_date(val: str | None) -> str:
 
 
 def filter_invalid(demo_df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    if "REPRT_CHANGE_CD" not in demo_df.columns:
+        return demo_df.copy(), 0
     before = len(demo_df)
     df = demo_df[demo_df["REPRT_CHANGE_CD"].astype(str).str.strip() != "1"].copy()
     removed = before - len(df)

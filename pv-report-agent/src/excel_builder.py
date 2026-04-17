@@ -834,27 +834,10 @@ def build_excel(
 
 
 def main():
-    base = _DEFAULT_BASE
-    demo, drug, event, assessment, drug1, drug2, drug3 = load_data(base=base)
-    merged = build_merged(demo, drug, event, assessment, drug_code=_DEFAULT_DRUG_CODE)
-    print(f"  대상 이상사례: {len(merged)}건 / 사례: {merged['KAERS_NO'].nunique()}건")
-
-    wb = Workbook()
-    wb.remove(wb.active)
-
-    write_summary_sheet(wb, demo, drug, event, merged, drug_name=_DEFAULT_DRUG_NAME)
-    write_analysis_tables(wb, merged, demo)
-    write_line_listing(wb, merged)
-    write_raw_demo(wb, demo)
-    write_raw_drug(wb, drug, drug1, drug2, drug3, drug_code=_DEFAULT_DRUG_CODE)
-    write_raw_event(wb, event)
-    write_raw_assessment(wb, assessment)
-    write_codebook_ref(wb)
-
     out = Path(__file__).parent.parent / "data" / "output" / f"{_DEFAULT_DRUG_NAME}_원시자료분석.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
-    wb.save(out)
-    print(f"\n✅ 완료: {out}")
+    out.write_bytes(build_excel(_DEFAULT_BASE, _DEFAULT_DRUG_CODE, _DEFAULT_DRUG_NAME))
+    print(f"✅ 완료: {out}")
 
 
 if __name__ == "__main__":
