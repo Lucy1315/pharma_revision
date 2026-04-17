@@ -56,6 +56,11 @@ def read_demo_bytes_from_uploads(uploaded) -> bytes | None:
 
 st.set_page_config(page_title="PV 보고서 자동화", page_icon="📋", layout="wide")
 
+# ── 상태 초기화용 nonce (위젯 key를 바꿔 완전 초기화) ─────────
+if "nonce" not in st.session_state:
+    st.session_state.nonce = 0
+_n = st.session_state.nonce
+
 # ── 헤더 ─────────────────────────────────────────────────────
 _h_col1, _h_col2 = st.columns([6, 1])
 with _h_col1:
@@ -64,8 +69,10 @@ with _h_col1:
 with _h_col2:
     st.write("")  # 세로 정렬용 여백
     if st.button("🔄 새로고침", help="입력값과 업로드 파일을 모두 초기화합니다", use_container_width=True):
+        # 모든 세션 상태 초기화 + nonce 증가(위젯 key 변경으로 파일 업로더까지 리셋)
         for _k in list(st.session_state.keys()):
             del st.session_state[_k]
+        st.session_state.nonce = _n + 1
         st.rerun()
 
 # ── 워크플로 안내 ────────────────────────────────────────────
@@ -91,6 +98,7 @@ with col_left:
         "원시자료 (ZIP 또는 여러 .txt 파일)",
         type=["zip", "txt"],
         accept_multiple_files=True,
+        key=f"uploads_{_n}",
         help=(
             "두 가지 방법 중 편한 쪽으로 업로드:\n"
             "• 방법 1: DEMO/DRUG/EVENT/ASSESSMENT.txt를 압축한 ZIP 파일 1개\n"
@@ -103,6 +111,7 @@ with col_left:
     nedrug_url = st.text_input(
         "식약처 의약품통합정보시스템 URL",
         placeholder="https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...",
+        key=f"nedrug_url_{_n}",
         help="nedrug.mfds.go.kr 제품 상세페이지 URL을 붙여넣으세요."
     )
 
@@ -149,36 +158,44 @@ with col_right:
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.text_input("시작일 (YYYY-MM-DD)", value=_auto_start or "2020-09-21",
+                                   key=f"start_{_n}",
                                    help="업로드된 DEMO.txt에서 자동 감지")
     with col2:
         end_date = st.text_input("종료일 (YYYY-MM-DD)", value=_auto_end or "2024-06-30",
+                                 key=f"end_{_n}",
                                  help="업로드된 DEMO.txt에서 자동 감지")
 
     st.subheader("④ 제품 정보 확인/수정")
     drug_code_input = st.text_input(
         "의약품 코드 (품목기준코드)",
         value=product.item_seq if product else "",
-        placeholder="자동 감지 또는 직접 입력"
+        placeholder="자동 감지 또는 직접 입력",
+        key=f"drug_code_{_n}",
     )
     drug_name = st.text_input(
         "제품명",
         value=product.item_name if product else "",
+        key=f"drug_name_{_n}",
     )
     company_name = st.text_input(
         "회사명",
         value=product.company_name if product else "",
+        key=f"company_{_n}",
     )
     ingredient_name = st.text_input(
         "성분명",
         value=product.ingredient_name if product else "",
+        key=f"ingredient_{_n}",
     )
     approval_date = st.text_input(
         "허가일",
         value=product.approval_date if product else "",
+        key=f"appr_date_{_n}",
     )
     approval_number = st.text_input(
         "허가번호",
         value=product.item_seq if product else "",
+        key=f"appr_num_{_n}",
     )
 
 # ── 업로드 상태 ─────────────────────────────────────────────
