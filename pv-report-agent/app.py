@@ -172,14 +172,10 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
                 st.error("의약품 코드를 입력하거나 URL로 제품 정보를 조회하세요.")
                 st.stop()
 
-            progress.progress(25, text="원시자료 분석 엑셀 생성 중...")
+            progress.progress(25, text="데이터 로드 및 검증 중...")
 
-            # ── STEP 3: 엑셀 생성 ──────────────────────────────
+            # ── STEP 3: Word용 데이터 준비 (검증 → 변환 → 병합) ──
             drug_name_final = drug_name.strip() or drug_code
-            xlsx_bytes = build_excel(tmpdir, drug_code, drug_name_final)
-            progress.progress(50, text="Word 보고서 생성 중...")
-
-            # ── STEP 4: Word 보고서 생성 ───────────────────────
             demo_df, drug_df, event_df, assessment_df, val_warns = load_and_validate(
                 tmpdir / "DEMO.txt",
                 tmpdir / "DRUG.txt",
@@ -200,7 +196,7 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
             if assessment_df is not None:
                 assessment_df = transform_assessment(assessment_df, unknown_codes)
 
-            progress.progress(65, text="데이터 병합 중...")
+            progress.progress(45, text="데이터 병합 중...")
             merged_df = join_tables(demo_df, drug_df, event_df, assessment_df, drug_code, warnings_log)
 
             if len(merged_df) == 0:
@@ -209,7 +205,17 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
             ll_df = build_line_listing(merged_df)
             n_cases = merged_df["KAERS_NO"].nunique() if len(merged_df) > 0 else 0
 
-            progress.progress(80, text="Word 문서 작성 중...")
+            # ── STEP 4: 공유 집계 (Word/Excel 일관성 보장) ────────
+            progress.progress(60, text="공유 집계 계산 중...")
+            from src.aggregator import compute_aggregates
+            shared_stats = compute_aggregates(merged_df, ll_df)
+
+            # ── STEP 5: 엑셀 생성 (공유 집계 전달) ────────────────
+            progress.progress(70, text="원시자료 분석 엑셀 생성 중...")
+            xlsx_bytes = build_excel(tmpdir, drug_code, drug_name_final, shared_stats=shared_stats)
+
+            # ── STEP 6: Word 보고서 생성 ──────────────────────────
+            progress.progress(85, text="Word 문서 작성 중...")
             data = ProcessedData(
                 df_merged=merged_df,
                 df_line_listing=ll_df,

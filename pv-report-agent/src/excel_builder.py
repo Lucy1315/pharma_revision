@@ -798,6 +798,107 @@ def write_codebook_ref(wb):
 
 
 # ═══════════════════════════════════════════════════════════
+# Word 연동 시트 (공유 집계 기반)
+# ═══════════════════════════════════════════════════════════
+
+def write_word_sync_sheet(wb, stats: dict, drug_name: str = ""):
+    """Word 보고서에 기록된 것과 동일한 수치를 Excel에 렌더링 (집계 일관성 검증용)."""
+    ws = wb.create_sheet("Word 연동 수치", 1)  # 요약 통계 다음에 위치
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 3
+    ws.column_dimensions["B"].width = 32
+    ws.column_dimensions["C"].width = 18
+    ws.column_dimensions["D"].width = 14
+
+    row = 1
+    c = ws.cell(row=row, column=2, value=f"■ {drug_name} Word 보고서 연동 수치 (공유 집계)")
+    c.font = Font(name="맑은 고딕", bold=True, size=14, color="1F4E79")
+    c.alignment = LEFT
+    row += 1
+    note = ws.cell(row=row, column=2,
+                   value="※ 이 시트의 수치는 Word 보고서와 동일한 aggregator.compute_aggregates()에서 유도됨")
+    note.font = Font(name="맑은 고딕", italic=True, size=9, color="595959")
+    note.alignment = LEFT
+    row += 2
+
+    def section_header(label, r):
+        c = ws.cell(row=r, column=2, value=label)
+        c.fill = SUB_FILL
+        c.font = WHITE_FONT
+        c.alignment = LEFT
+        c.border = THIN_BORDER
+        for col in range(3, 5):
+            ws.cell(r, col).fill = SUB_FILL
+            ws.cell(r, col).border = THIN_BORDER
+        return r + 1
+
+    def kv(r, label, val):
+        c1 = ws.cell(row=r, column=2, value=label)
+        c2 = ws.cell(row=r, column=3, value=val)
+        c1.font = SMALL_FONT; c1.alignment = LEFT; c1.border = THIN_BORDER
+        c2.font = SMALL_FONT; c2.alignment = RIGHT; c2.border = THIN_BORDER
+        if isinstance(val, int):
+            c2.number_format = "#,##0"
+        return r + 1
+
+    # 기본 수치
+    row = section_header("기본 수치", row)
+    row = kv(row, "이상사례 총 건수", stats.get("n_events", 0))
+    row = kv(row, "보고 인원(사례) 수", stats.get("n_cases", 0))
+    row = kv(row, "남성", stats.get("male", 0))
+    row = kv(row, "여성", stats.get("female", 0))
+    row = kv(row, "중대한 이상사례", stats.get("n_serious", 0))
+    row = kv(row, "비중대 이상사례", stats.get("n_non_serious", 0))
+    row = kv(row, "신속보고", stats.get("n_quick", 0))
+    row += 1
+
+    # 연령대
+    age_counts = stats.get("age_counts")
+    if age_counts is not None and len(age_counts) > 0:
+        row = section_header("연령대별 (사례 단위)", row)
+        for k, v in age_counts.items():
+            row = kv(row, f"  {k}", int(v))
+        row += 1
+
+    # 보고유형 × 신속/일반
+    rpt_cross = stats.get("rpt_cross")
+    if rpt_cross is not None and len(rpt_cross) > 0:
+        row = section_header("보고유형 × 신속/일반", row)
+        write_header_row(ws, row, ["", "보고유형"] + list(rpt_cross.columns) + ["합계"])
+        ws.row_dimensions[row].height = 22
+        row += 1
+        for idx, r_data in rpt_cross.iterrows():
+            total = int(r_data.sum())
+            cols = [idx] + [int(v) for v in r_data.values] + [total]
+            for ci, val in enumerate(cols, 2):
+                c = ws.cell(row=row, column=ci, value=val)
+                c.font = SMALL_FONT
+                c.alignment = LEFT if ci == 2 else RIGHT
+                c.border = THIN_BORDER
+            row += 1
+        row += 1
+
+    # SOC 요약
+    soc_summary = stats.get("soc_summary")
+    if soc_summary is not None and len(soc_summary) > 0:
+        row = section_header("SOC(기관계대분류)별 건수", row)
+        write_header_row(ws, row, ["", "SOC", "건수", "비율"])
+        ws.row_dimensions[row].height = 22
+        row += 1
+        total_events = stats.get("n_events", 0) or 1
+        for _, r_data in soc_summary.iterrows():
+            pct = f"{r_data['건수'] / total_events * 100:.1f}%"
+            for ci, val in enumerate([r_data["SOC_NM"], int(r_data["건수"]), pct], 2):
+                c = ws.cell(row=row, column=ci, value=val)
+                c.font = SMALL_FONT
+                c.alignment = LEFT if ci == 2 else RIGHT
+                c.border = THIN_BORDER
+            row += 1
+
+    ws.freeze_panes = "B4"
+
+
+# ═══════════════════════════════════════════════════════════
 # 공개 API
 # ═══════════════════════════════════════════════════════════
 
@@ -805,11 +906,13 @@ def build_excel(
     files_dir: Path | str,
     drug_code: str,
     drug_name: str,
+    shared_stats: dict | None = None,
 ) -> bytes:
     """
     files_dir: DEMO/DRUG/EVENT/ASSESSMENT.txt가 있는 디렉토리
     drug_code: 의약품 품목기준코드
     drug_name: 제품명 (엑셀 제목에 사용)
+    shared_stats: aggregator.compute_aggregates() 결과. 있으면 Word 연동 검증 시트 추가.
     반환: xlsx bytes
     """
     base = Path(files_dir)
@@ -820,6 +923,8 @@ def build_excel(
     wb.remove(wb.active)
 
     write_summary_sheet(wb, demo, drug, event, merged, drug_name=drug_name)
+    if shared_stats is not None:
+        write_word_sync_sheet(wb, shared_stats, drug_name=drug_name)
     write_analysis_tables(wb, merged, demo)
     write_line_listing(wb, merged)
     write_raw_demo(wb, demo)

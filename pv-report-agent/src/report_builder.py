@@ -6,6 +6,7 @@ from docx.oxml import OxmlElement
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import pandas as pd
 from .types import ProcessedData
+from .aggregator import compute_aggregates
 
 
 # ── 스타일 헬퍼 ──────────────────────────────────────────
@@ -74,56 +75,8 @@ def _pct(n: int, total: int) -> str:
 
 
 def _compute_stats(data: ProcessedData) -> dict:
-    df = data.df_merged
-    ll = data.df_line_listing
-    n_cases = data.total_cases
-    n_events = len(ll)
-
-    # 성별
-    sex_counts = df.drop_duplicates("KAERS_NO")["PTNT_SEX_NM"].value_counts()
-    male = int(sex_counts.get("남", 0))
-    female = int(sex_counts.get("여", 0))
-
-    # 연령대
-    age_counts = df.drop_duplicates("KAERS_NO")["PTNT_AGRDE_NM"].value_counts()
-
-    # 보고유형 × 신속/일반
-    demo_unique = df.drop_duplicates("KAERS_NO")
-    rpt_cross = pd.crosstab(
-        demo_unique["RPT_TY_NM"],
-        demo_unique["IS_QUICK"].map({True: "신속보고", False: "일반보고"}),
-    ).fillna(0).astype(int)
-
-    # 중대성
-    n_serious = int(ll["중대성"].eq("Y").sum()) if "중대성" in ll.columns else 0
-    n_non_serious = n_events - n_serious
-
-    # SOC/PT 요약
-    soc_pt = (
-        df.groupby(["SOC_NM", "ADR_MEDDRA_KOR_NM"])
-        .agg(
-            전체건수=("ADR_MEDDRA_KOR_NM", "count"),
-            중대성건수=("IS_SERIOUS", lambda x: x.sum()),
-        )
-        .reset_index()
-    )
-    soc_pt["비율"] = soc_pt["전체건수"].apply(lambda n: _pct(n, n_events))
-
-    # 상위 이상사례
-    top3 = (
-        df["ADR_MEDDRA_KOR_NM"].value_counts().head(3)
-        if "ADR_MEDDRA_KOR_NM" in df.columns else pd.Series(dtype=int)
-    )
-
-    return dict(
-        n_cases=n_cases, n_events=n_events,
-        male=male, female=female,
-        age_counts=age_counts,
-        rpt_cross=rpt_cross,
-        n_serious=n_serious, n_non_serious=n_non_serious,
-        soc_pt=soc_pt, top3=top3,
-        n_quick=int(demo_unique["IS_QUICK"].sum()) if "IS_QUICK" in demo_unique.columns else 0,
-    )
+    """공유 집계 모듈 호출. Excel과 동일한 수치를 보장."""
+    return compute_aggregates(data.df_merged, data.df_line_listing)
 
 
 # ── 정성 텍스트 생성 ─────────────────────────────────────
