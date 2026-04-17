@@ -132,6 +132,99 @@ def _narrative_adverse_events(stats: dict) -> str:
     )
 
 
+# ── (ㄹ)(ㅁ)(ㅂ) 데이터 기반 초안 ─────────────────────────
+
+def _build_approval_comparison(doc: Document, stats: dict, data: ProcessedData):
+    """(ㄹ) 허가사항 비교 초안 — 보고된 이상사례 목록을 SOC별로 나열."""
+    soc_summary = stats.get("soc_summary")
+    n_events = stats.get("n_events", 0)
+    drug = data.drug_name or "본 제품"
+
+    p = doc.add_paragraph(style="No Spacing")
+    p.add_run(
+        f"본 분석 기간 중 {drug}과 관련하여 보고된 이상사례는 총 {n_events}건이며, "
+        f"기관계대분류(SOC) 기준 분포는 다음과 같다."
+    )
+
+    if soc_summary is not None and len(soc_summary) > 0:
+        for _, r in soc_summary.iterrows():
+            soc = r["SOC_NM"]
+            cnt = int(r["건수"])
+            pct = f"{cnt / n_events * 100:.1f}%" if n_events else "0.0%"
+            _para(doc, f"  • {soc}: {cnt}건 ({pct})")
+
+    p = doc.add_paragraph(style="No Spacing")
+    p.add_run(
+        "상기 이상사례 각각이 현재 허가사항(사용상의 주의사항)에 수재되어 있는지 "
+        "여부는 사내 허가사항 문서와의 대조가 필요하다."
+    )
+    p = doc.add_paragraph(style="No Spacing")
+    _blue_run(p, "[검토필요: 상기 SOC/PT 각 항목이 현행 허가사항에 수재되어 있는지 대조]")
+
+
+def _build_off_label_events(doc: Document, stats: dict, data: ProcessedData):
+    """(ㅁ) 허가사항 외 이상사례 초안 — 전체 이상사례를 PT 단위로 나열."""
+    pt_summary = stats.get("pt_summary")
+
+    p = doc.add_paragraph(style="No Spacing")
+    p.add_run(
+        "본 분석 기간 중 보고된 이상사례명(PT, Preferred Term) 목록은 아래와 같다. "
+        "각 이상사례가 허가사항에 등재되지 않은 신규 이상사례(Off-label)인지 여부는 "
+        "상기 (ㄹ) 항목의 허가사항 대조 결과에 따라 판정한다."
+    )
+
+    if pt_summary is not None and len(pt_summary) > 0:
+        for _, r in pt_summary.iterrows():
+            _para(doc, f"  • {r['PT']}: {int(r['건수'])}건")
+
+    p = doc.add_paragraph(style="No Spacing")
+    _blue_run(p, "[검토필요: 상기 PT 중 허가사항 미수재 항목을 식별하여 별도 기재]")
+
+
+def _build_overall_review(doc: Document, stats: dict, data: ProcessedData):
+    """(ㅂ) 종합 검토 초안 — 수치 기반 자동 요약문."""
+    n = stats.get("n_events", 0)
+    n_cases = stats.get("n_cases", 0)
+    serious = stats.get("n_serious", 0)
+    non_serious = stats.get("n_non_serious", 0)
+    serious_pct = f"{serious / n * 100:.1f}%" if n else "0.0%"
+
+    # 인과성 "확실~가능" 집계
+    evalt = stats.get("evalt_counts")
+    related_terms = {"확실함", "상당히확실함", "가능함"}
+    n_related = 0
+    if evalt is not None and len(evalt) > 0:
+        n_related = int(sum(v for k, v in evalt.items() if str(k) in related_terms))
+
+    drug = data.drug_name or "본 제품"
+    start, end = data.analysis_period
+    period_str = f"{start} ~ {end}" if start and end else "본 분석 기간"
+
+    p = doc.add_paragraph(style="No Spacing")
+    p.add_run(
+        f"{period_str} 동안 {drug}에 대해 보고된 이상사례는 총 {n}건({n_cases}건의 사례)이며, "
+        f"이 중 중대한 이상사례는 {serious}건({serious_pct}), 비중대 이상사례는 {non_serious}건이었다."
+    )
+
+    if data.has_assessment:
+        p = doc.add_paragraph(style="No Spacing")
+        p.add_run(
+            f"인과성 평가 결과 '확실함/상당히 확실함/가능함'으로 분류된 이상사례는 {n_related}건이었다."
+        )
+    else:
+        p = doc.add_paragraph(style="No Spacing")
+        _blue_run(p, "[검토필요: 인과성 평가 자료(ASSESSMENT.txt) 미제공 — 별도 검토 필요]")
+
+    p = doc.add_paragraph(style="No Spacing")
+    p.add_run(
+        "보고된 이상사례의 SOC별 분포 및 중대성·인과성을 종합 검토한 결과, "
+        "(ㄹ)(ㅁ) 항목의 허가사항 대조 결과를 바탕으로 허가사항 개정 필요 여부 및 "
+        "신규 안전성 신호(Safety Signal) 발생 여부를 판단한다."
+    )
+    p = doc.add_paragraph(style="No Spacing")
+    _blue_run(p, "[검토필요: 허가사항 개정 필요성 및 안전성 신호 최종 판단]")
+
+
 # ── 테이블 빌더 ──────────────────────────────────────────
 
 def _build_company_info_table(doc: Document, data: ProcessedData):
@@ -376,22 +469,19 @@ def build_report(data: ProcessedData) -> bytes:
     _build_line_listing_table(doc, ll)
     doc.add_paragraph()
 
-    # (ㄹ) 허가사항 비교
+    # (ㄹ) 허가사항 비교 — 데이터 기반 자동 초안
     _para(doc, "(ㄹ) 보고된 이상사례와 허가사항의 비교")
-    p = doc.add_paragraph(style="No Spacing")
-    _yellow_run(p, "[이곳에 이상사례와 허가사항 사용상의 주의사항 비교 내용을 입력하세요]")
+    _build_approval_comparison(doc, stats, data)
     doc.add_paragraph()
 
-    # (ㅁ) 허가사항 외 이상사례
+    # (ㅁ) 허가사항 외 이상사례 — 데이터 기반 자동 초안
     _para(doc, "(ㅁ) 허가사항 외 발생한 이상사례")
-    p = doc.add_paragraph(style="No Spacing")
-    _yellow_run(p, "[이곳에 허가사항에 없는 이상사례 목록 및 검토 내용을 입력하세요]")
+    _build_off_label_events(doc, stats, data)
     doc.add_paragraph()
 
-    # (ㅂ) 검토
+    # (ㅂ) 검토 — 데이터 기반 종합 요약
     _para(doc, "(ㅂ) 검토")
-    p = doc.add_paragraph(style="No Spacing")
-    _yellow_run(p, "[이곳에 종합 검토 의견을 입력하세요]")
+    _build_overall_review(doc, stats, data)
     doc.add_paragraph()
 
     # ── 경고 로그 ──

@@ -57,8 +57,16 @@ def read_demo_bytes_from_uploads(uploaded) -> bytes | None:
 st.set_page_config(page_title="PV 보고서 자동화", page_icon="📋", layout="wide")
 
 # ── 헤더 ─────────────────────────────────────────────────────
-st.title("📋 안전관리책임자 보고서 자동 생성")
-st.caption("식약처 품목갱신 가이드라인(99~115p) 기반 Word 문서 + 원시자료 분석 엑셀 자동 생성")
+_h_col1, _h_col2 = st.columns([6, 1])
+with _h_col1:
+    st.title("📋 안전관리책임자 보고서 자동 생성")
+    st.caption("식약처 품목갱신 가이드라인(99~115p) 기반 Word 문서 + 원시자료 분석 엑셀 자동 생성")
+with _h_col2:
+    st.write("")  # 세로 정렬용 여백
+    if st.button("🔄 새로고침", help="입력값과 업로드 파일을 모두 초기화합니다", use_container_width=True):
+        for _k in list(st.session_state.keys()):
+            del st.session_state[_k]
+        st.rerun()
 
 # ── 워크플로 안내 ────────────────────────────────────────────
 with st.expander("📌 사용 방법", expanded=False):
@@ -106,10 +114,15 @@ with col_left:
                 product = scrape_product_info(nedrug_url)
                 if product.item_name:
                     st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
+                elif product.item_seq:
+                    st.info(
+                        f"ℹ️ 품목기준코드 **{product.item_seq}** 는 URL에서 자동 추출됐습니다. "
+                        "제품명/회사명/허가일은 오른쪽에서 직접 입력하세요."
+                    )
                 else:
-                    st.warning("제품명을 찾지 못했습니다. 아래에서 직접 입력하세요.")
+                    st.warning("제품 정보를 가져오지 못했습니다. URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
                 for w in product.warnings:
-                    st.warning(f"조회 경고: {w}")
+                    st.warning(w)
             except Exception as e:
                 st.error(f"제품 정보 조회 실패: {e}")
 
