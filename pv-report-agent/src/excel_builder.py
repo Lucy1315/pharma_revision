@@ -142,10 +142,23 @@ def load_data(base=None):
     demo = read_txt("DEMO.txt", base=b)
     drug = read_txt("DRUG.txt", base=b)
     event = read_txt("EVENT.txt", base=b)
-    assessment = read_txt("ASSESSMENT.txt", base=b)
-    drug1 = read_txt("DRUG1.txt", base=b) if (b / "DRUG1.txt").exists() else pd.DataFrame(columns=["KAERS_NO","DRUG_SEQ","INGR_SEQ","INGR_CD"])
-    drug2 = read_txt("DRUG2.txt", base=b) if (b / "DRUG2.txt").exists() else pd.DataFrame(columns=["KAERS_NO","DRUG_SEQ"])
-    drug3 = read_txt("DRUG3.txt", base=b) if (b / "DRUG3.txt").exists() else pd.DataFrame(columns=["KAERS_NO","DRUG_SEQ"])
+    if (b / "ASSESSMENT.txt").exists():
+        assessment = read_txt("ASSESSMENT.txt", base=b)
+    else:
+        assessment = pd.DataFrame(columns=["KAERS_NO", "DRUG_SEQ", "ADR_SEQ", "EVALT_RESULT_CODE"])
+    drug1 = read_txt("DRUG1.txt", base=b) if (b / "DRUG1.txt").exists() else pd.DataFrame(
+        columns=["KAERS_NO", "DRUG_SEQ", "INGR_SEQ", "INGR_CD"]
+    )
+    drug2 = read_txt("DRUG2.txt", base=b) if (b / "DRUG2.txt").exists() else pd.DataFrame(
+        columns=["KAERS_NO", "DRUG_SEQ", "DOSAGE_QTY", "DOSAGE_QTY_UNIT",
+                 "DOSAGE_INTRVL", "DOSAGE_INTRVL_UNIT", "DOSAGE_START_DT", "DOSAGE_END_DT",
+                 "DOSAGE_TERM", "DOSAGE_TERM_UNIT", "BNDE_LOT_NO",
+                 "DRUG_SHAPE_ID", "DRUG_SHAPE_TXT", "DOSAGE_ROUTE_ID", "DOSAGE_ROUTE_TXT"]
+    )
+    drug3 = read_txt("DRUG3.txt", base=b) if (b / "DRUG3.txt").exists() else pd.DataFrame(
+        columns=["KAERS_NO", "DRUG_SEQ", "EFFICACY_MEDDRA_KOR_NM",
+                 "EFFICACY_MEDDRA_ENG_NM", "DSAS_CD", "DSAS_CD_VER"]
+    )
 
     # 무효 건 제거
     if "REPRT_CHANGE_CD" in demo.columns:
