@@ -12,8 +12,8 @@ from openpyxl.styles import (
 )
 from openpyxl.utils import get_column_letter
 
-# 기본값 (단독 실행 시)
-_DEFAULT_BASE = Path(__file__).parent.parent / "docs" / "files"
+# 기본값 (단독 실행 시). src/excel_builder.py 기준 → drug-revision/docs/files
+_DEFAULT_BASE = Path(__file__).parent.parent.parent / "docs" / "files"
 _DEFAULT_DRUG_CODE = "201506668"
 _DEFAULT_DRUG_NAME = "프로테조밉주3.5mg"
 
