@@ -2,6 +2,7 @@
 식약처 의약품통합정보시스템(nedrug)에서 제품 정보를 스크래핑.
 URL 형식: https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...
 """
+import json
 import re
 import urllib.request
 import urllib.parse
@@ -13,9 +14,10 @@ class ProductInfo:
     item_name: str = ""
     company_name: str = ""
     approval_date: str = ""
-    item_seq: str = ""          # 품목기준코드 (= 의약품 코드)
+    item_seq: str = ""              # 품목기준코드 (= 의약품 코드)
     atc_code: str = ""
-    ingredient_name: str = ""   # ATC코드에서 추출한 영문 성분명
+    ingredient_name: str = ""       # 한글 성분명 (ingrMainName JSON 필드)
+    ingredient_name_en: str = ""    # 영문 성분명 (ATC코드 괄호)
     standard_code: str = ""
     storage: str = ""
     use_period: str = ""
@@ -68,12 +70,27 @@ def scrape_product_info(url: str) -> ProductInfo:
     if field_map.get("품목기준코드"):
         info.item_seq = field_map["품목기준코드"].strip()
 
-    # ATC 코드에서 성분명 추출 (예: "L01XG01 (bortezomib)" → "bortezomib")
+    # ATC 코드에서 영문 성분명 추출 (예: "L01XG01 (bortezomib)" → "bortezomib")
     atc_raw = field_map.get("ATC코드", "")
     info.atc_code = atc_raw
-    ingr_match = re.search(r"\(([^)]+)\)", atc_raw)
-    if ingr_match:
-        info.ingredient_name = ingr_match.group(1)
+    atc_ingr = re.search(r"\(([^)]+)\)", atc_raw)
+    if atc_ingr:
+        info.ingredient_name_en = atc_ingr.group(1)
+
+    # 한글 성분명: ingrMainName JSON 필드에서 추출
+    # 형식: {"ingrMainName":"유효성분 : 보르테조밉삼합체", ...}
+    ingr_json = re.search(r'\{[^{}]*"ingrMainName"[^{}]*\}', html)
+    if ingr_json:
+        try:
+            obj = json.loads(ingr_json.group())
+            raw_ingr = obj.get("ingrMainName", "")
+            info.ingredient_name = re.sub(r"^유효성분\s*:\s*", "", raw_ingr).strip()
+        except (json.JSONDecodeError, Exception):
+            pass
+
+    # ingredient_name이 비어있으면 영문으로 fallback
+    if not info.ingredient_name:
+        info.ingredient_name = info.ingredient_name_en
 
     # H1에서 품목명 보완
     if not info.item_name:

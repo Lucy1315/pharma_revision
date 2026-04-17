@@ -25,6 +25,7 @@ class TestScrapeProductInfoParsing:
       <tr><th scope="row">품목기준코드</th><td>202000001</td></tr>
       <tr><th scope="row">ATC코드</th><td>L01XG01 (testmab)</td></tr>
     </table>
+    <script>{"ingrMainName":"유효성분 : 테스트성분한글","ingrTotqy":"5"}</script>
     """
 
     def test_parse_mock_html(self, monkeypatch):
@@ -56,10 +57,20 @@ class TestScrapeProductInfoParsing:
         ingr_match = re.search(r"\(([^)]+)\)", atc)
         assert ingr_match and ingr_match.group(1) == "testmab"
 
+        # 한글 성분명: ingrMainName JSON 파싱
+        import json
+        ingr_json = re.search(r'\{[^{}]*"ingrMainName"[^{}]*\}', html)
+        assert ingr_json is not None
+        obj = json.loads(ingr_json.group())
+        ko_ingr = re.sub(r"^유효성분\s*:\s*", "", obj["ingrMainName"]).strip()
+        assert ko_ingr == "테스트성분한글"
+
     def test_product_info_dataclass_defaults(self):
         p = ProductInfo()
         assert p.item_name == ""
         assert p.company_name == ""
+        assert p.ingredient_name == ""
+        assert p.ingredient_name_en == ""
         assert p.warnings == []
 
     def test_warning_on_network_failure(self, monkeypatch):
