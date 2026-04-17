@@ -118,6 +118,11 @@ with col_left:
     # URL에서 제품 정보 자동 조회
     product: ProductInfo | None = None
     if nedrug_url and nedrug_url.startswith("http"):
+        # 항상 브라우저에서 직접 열기 링크 제공 (스크래핑 성공 여부 무관)
+        st.markdown(
+            f'🔗 **[nedrug 페이지를 브라우저에서 직접 열기]({nedrug_url})** '
+            "(새 탭) — 스크래핑이 실패하면 여기서 직접 확인 후 오른쪽에 복사·붙여넣기"
+        )
         with st.spinner("제품 정보 조회 중..."):
             try:
                 product = scrape_product_info(nedrug_url)
@@ -125,13 +130,17 @@ with col_left:
                     st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
                 elif product.item_seq:
                     st.info(
-                        f"ℹ️ 품목기준코드 **{product.item_seq}** 는 URL에서 자동 추출됐습니다. "
-                        "제품명/회사명/허가일은 오른쪽에서 직접 입력하세요."
+                        f"ℹ️ **품목기준코드 {product.item_seq}** 는 URL에서 자동 추출됐습니다.\n\n"
+                        "☝️ 위 링크를 눌러 nedrug 페이지를 열고 **제품명·회사명·허가일**을 "
+                        "복사해 오른쪽 필드에 붙여넣으세요. (Streamlit Cloud는 미국 서버라 "
+                        "한국 정부 사이트 직접 접속이 방화벽에 막혀 있습니다.)"
                     )
                 else:
-                    st.warning("제품 정보를 가져오지 못했습니다. URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
-                for w in product.warnings:
-                    st.warning(w)
+                    st.warning("URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
+                # 네트워크 차단 경고는 이미 info로 표시했으므로, 중복 표시 최소화
+                if product and not product.item_seq:
+                    for w in product.warnings:
+                        st.warning(w)
             except Exception as e:
                 st.error(f"제품 정보 조회 실패: {e}")
 
