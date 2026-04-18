@@ -61,6 +61,36 @@ def _strip_code_prefix(text: str) -> str:
     return re.sub(r"\[M\d+\]", "", text).strip()
 
 
+def classify_api_error(err: str) -> str:
+    """`_call_api`가 반환한 내부 에러 문자열을 사용자용 한글 메시지로 분류.
+
+    정책:
+      - 빈 문자열  → "" (오류 없음)
+      - API_KEY_MISSING → 키 설정 안내
+      - HTTP 429 / RateLimit → 호출 제한
+      - HTTP 4xx 키/권한 관련 → 키 만료·승인 대기
+      - 네트워크 / 타임아웃 → 연결 실패
+      - 그 외  → 원문 유지 + 일반 안내
+    """
+    if not err:
+        return ""
+    if err == "API_KEY_MISSING":
+        return (
+            "공공데이터포털 API 키가 설정되지 않았습니다. "
+            "`DATA_GO_KR_KEY` 환경변수 또는 `.streamlit/secrets.toml`을 확인하세요."
+        )
+    low = err.lower()
+    if "429" in err or "rate" in low or "limit" in low:
+        return "공공데이터포털 호출 제한(429). 잠시 후 다시 시도하세요."
+    if any(k in err for k in ("401", "403", "SERVICE_KEY", "SERVICEKEY", "NO_OPENAPI_SERVICE_ERROR", "INVALID")):
+        return "API 키가 만료되었거나 승인 대기 중입니다. 공공데이터포털에서 키 상태를 확인하세요."
+    if any(k in low for k in ("timeout", "timed out", "connection", "urlerror", "oserror", "socket")):
+        return f"공공데이터포털 연결 실패 — 네트워크를 확인하세요. ({err})"
+    if "jsondecodeerror" in low:
+        return f"API 응답 형식 오류 — 공공데이터포털 상태를 확인하세요. ({err})"
+    return f"API 오류: {err}"
+
+
 def _call_api(endpoint: str, params: dict, retries: int = 3, timeout: int = 15) -> tuple[dict | None, str]:
     """공공데이터포털 API 호출. (parsed_json, error_msg) 반환.
 
@@ -132,32 +162,40 @@ def _item_to_product_info(item: dict) -> ProductInfo:
     return info
 
 
-def search_drug_by_name(item_name: str, num_of_rows: int = 10) -> list[ProductInfo]:
-    """제품명으로 의약품 허가 목록 검색 (공공데이터포털 API)."""
+def search_drug_by_name(item_name: str, num_of_rows: int = 10) -> tuple[list[ProductInfo], str]:
+    """제품명으로 의약품 허가 목록 검색 (공공데이터포털 API).
+
+    반환: (결과 리스트, 에러 문자열).
+    에러 없으면 err="". API 실패 시 빈 리스트 + 분류된 err 메시지.
+    """
     resp, err = _call_api("getDrugPrdtPrmsnInq07", {
         "item_name": item_name,
         "numOfRows": str(num_of_rows),
         "pageNo": "1",
     })
     if resp is None:
-        return []
+        return [], classify_api_error(err)
     items = _extract_items(resp)
-    return [_item_to_product_info(it) for it in items]
+    return [_item_to_product_info(it) for it in items], ""
 
 
-def get_drug_detail_by_code(item_seq: str) -> ProductInfo | None:
-    """품목기준코드로 의약품 상세정보 조회 (공공데이터포털 API)."""
+def get_drug_detail_by_code(item_seq: str) -> tuple[ProductInfo | None, str]:
+    """품목기준코드로 의약품 상세정보 조회 (공공데이터포털 API).
+
+    반환: (ProductInfo|None, 에러 문자열).
+    결과가 없으면 (None, "")로 반환 (에러와 구분).
+    """
     resp, err = _call_api("getDrugPrdtPrmsnDtlInq06", {
         "item_seq": item_seq,
         "numOfRows": "1",
         "pageNo": "1",
     })
     if resp is None:
-        return None
+        return None, classify_api_error(err)
     items = _extract_items(resp)
     if not items:
-        return None
-    return _item_to_product_info(items[0])
+        return None, ""
+    return _item_to_product_info(items[0]), ""
 
 
 def get_drug_ingredients(item_seq: str) -> list[dict]:
@@ -197,26 +235,33 @@ def _enrich_ingredients(info: ProductInfo) -> None:
 def lookup_product_info(item_seq: str = "", item_name: str = "") -> ProductInfo:
     """공공데이터포털 API로 제품 정보 조회. 품목기준코드 우선, 없으면 제품명 검색.
 
-    API 실패 시 빈 ProductInfo(경고 포함)를 반환하므로 nedrug fallback과 조합 가능.
+    API 실패 시 빈 ProductInfo(warnings에 분류된 한글 메시지 포함)를 반환.
     """
     info = ProductInfo(source_method="api")
 
     if item_seq:
-        detail = get_drug_detail_by_code(item_seq)
+        detail, err = get_drug_detail_by_code(item_seq)
         if detail and detail.item_name:
             detail.source_method = "api"
             _enrich_ingredients(detail)
             return detail
+        if err:
+            info.warnings.append(err)
+            return info
 
     if item_name:
-        results = search_drug_by_name(item_name, num_of_rows=5)
+        results, err = search_drug_by_name(item_name, num_of_rows=5)
         if results:
             best = results[0]
             best.source_method = "api"
             _enrich_ingredients(best)
             return best
+        if err:
+            info.warnings.append(err)
+            return info
 
-    info.warnings.append("품목기준코드 또는 제품명을 입력하세요.")
+    if not item_seq and not item_name:
+        info.warnings.append("품목기준코드 또는 제품명을 입력하세요.")
     return info
 
 

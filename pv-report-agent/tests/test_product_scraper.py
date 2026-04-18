@@ -11,12 +11,39 @@ from src.product_scraper import (
     _extract_items,
     _get_api_key,
     _item_to_product_info,
+    classify_api_error,
     extract_drug_code_from_url,
     get_drug_detail_by_code,
     lookup_product_info,
     scrape_product_info,
     search_drug_by_name,
 )
+
+
+class TestClassifyApiError:
+    def test_empty(self):
+        assert classify_api_error("") == ""
+
+    def test_key_missing(self):
+        assert "API 키" in classify_api_error("API_KEY_MISSING")
+
+    def test_rate_limit_429(self):
+        assert "호출 제한" in classify_api_error("HTTPError 429: Too Many Requests")
+
+    def test_invalid_key(self):
+        for err in ("HTTPError 401", "SERVICE_KEY_IS_NOT_REGISTERED_ERROR", "NO_OPENAPI_SERVICE_ERROR", "INVALID_REQUEST_PARAMETER"):
+            msg = classify_api_error(err)
+            assert "키" in msg or "승인" in msg
+
+    def test_network(self):
+        for err in ("ConnectionError: refused", "socket.timeout", "URLError: [Errno 54]"):
+            assert "연결 실패" in classify_api_error(err)
+
+    def test_json_decode(self):
+        assert "응답 형식 오류" in classify_api_error("JSONDecodeError: Expecting value")
+
+    def test_fallback(self):
+        assert classify_api_error("unknown thing").startswith("API 오류")
 
 
 class _FakeResponse:
@@ -225,15 +252,17 @@ class TestSearchAndLookup:
                 {"ITEM_NAME": "벨케이드주", "ENTP_NAME": "한국얀센", "ITEM_SEQ": "200912345"},
             ]}
         })
-        results = search_drug_by_name("프로테조밉")
+        results, err = search_drug_by_name("프로테조밉")
+        assert err == ""
         assert len(results) == 2
         assert results[0].item_name == "프로테조밉주3.5mg"
         assert results[0].item_seq == "201506668"
 
     def test_search_empty_on_api_failure(self, monkeypatch):
         _patch_api_error(monkeypatch, OSError("boom"))
-        results = search_drug_by_name("프로테조밉")
+        results, err = search_drug_by_name("프로테조밉")
         assert results == []
+        assert "연결 실패" in err or "API 오류" in err
 
     def test_get_drug_detail_by_code(self, monkeypatch):
         _patch_api(monkeypatch, {
@@ -247,7 +276,8 @@ class TestSearchAndLookup:
             }}}
         })
         # _enrich_ingredients가 추가 호출하므로 동일 응답이 와도 상관없음
-        info = get_drug_detail_by_code("201506668")
+        info, err = get_drug_detail_by_code("201506668")
+        assert err == ""
         assert info is not None
         assert info.item_name == "프로테조밉주3.5mg"
         assert info.item_seq == "201506668"
@@ -256,7 +286,16 @@ class TestSearchAndLookup:
 
     def test_get_drug_detail_returns_none_when_empty(self, monkeypatch):
         _patch_api(monkeypatch, {"body": {"items": []}})
-        assert get_drug_detail_by_code("000000000") is None
+        info, err = get_drug_detail_by_code("000000000")
+        assert info is None
+        assert err == ""  # 결과 없음은 에러가 아님
+
+    def test_get_drug_detail_propagates_error_on_api_failure(self, monkeypatch):
+        _patch_api_error(monkeypatch, ConnectionError("refused"))
+        info, err = get_drug_detail_by_code("000000000")
+        assert info is None
+        assert err  # 한글 분류 메시지
+        assert "연결 실패" in err or "API 오류" in err
 
     def test_lookup_uses_item_seq_first(self, monkeypatch):
         """품목기준코드가 있으면 getDrugPrdtPrmsnDtlInq06 응답 사용."""
@@ -286,6 +325,20 @@ class TestSearchAndLookup:
         info = lookup_product_info()
         assert info.warnings
         assert any("품목기준코드" in w or "제품명" in w for w in info.warnings)
+
+    def test_lookup_propagates_key_missing_error(self, monkeypatch):
+        monkeypatch.delenv("DATA_GO_KR_KEY", raising=False)
+        import sys
+        monkeypatch.setitem(sys.modules, "streamlit", None)
+        info = lookup_product_info(item_seq="201506668")
+        assert info.warnings
+        assert any("API 키" in w for w in info.warnings)
+
+    def test_lookup_propagates_network_error(self, monkeypatch):
+        _patch_api_error(monkeypatch, ConnectionError("refused"))
+        info = lookup_product_info(item_seq="201506668")
+        assert info.warnings
+        assert any("연결 실패" in w or "API 오류" in w for w in info.warnings)
 
     def test_item_to_product_info_strip_ingredient_prefix(self):
         """[M123456] 같은 API 접두사를 성분명에서 제거."""

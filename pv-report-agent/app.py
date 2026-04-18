@@ -283,8 +283,12 @@ with col_left:
                     if product and product.item_name:
                         st.success(f"✅ API 조회 완료: **{product.item_name}** ({product.company_name})")
                     elif product and product.warnings:
+                        # API 키/네트워크/호출제한 등은 st.error, 결과 없음은 st.warning
                         for w in product.warnings:
-                            st.warning(w)
+                            if any(k in w for k in ("API 키", "연결 실패", "호출 제한", "API 오류", "응답 형식")):
+                                st.error(w)
+                            else:
+                                st.warning(w)
                     else:
                         st.warning("해당 품목기준코드로 조회된 결과가 없습니다. 오른쪽에서 직접 입력하세요.")
                 except Exception as e:
@@ -300,7 +304,9 @@ with col_left:
         if _api_name and _api_name.strip():
             with st.spinner("공공데이터포털 API 검색 중..."):
                 try:
-                    results = search_drug_by_name(_api_name.strip(), num_of_rows=10)
+                    results, _api_err = search_drug_by_name(_api_name.strip(), num_of_rows=10)
+                    if _api_err:
+                        st.error(_api_err)
                     if results:
                         options = {
                             f"{r.item_name} — {r.company_name} (코드: {r.item_seq})": r
@@ -316,7 +322,8 @@ with col_left:
                             st.success(f"✅ 선택: **{product.item_name}**")
                         else:
                             st.warning("검색 결과가 없습니다.")
-                    else:
+                    elif not _api_err:
+                        # 에러가 아니라 단순히 매칭 결과가 없는 경우만 여기 표시
                         st.warning("검색 결과가 없습니다. 제품명을 다시 확인하세요.")
                 except Exception as e:
                     st.error(f"API 검색 실패: {e}")
@@ -543,7 +550,10 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
     except Exception as e:
         progress.progress(0)
         st.error(f"❌ 처리 오류: {e}")
-        raise
+        # 상세 스택트레이스는 expander에만 표시 — 배포 환경에서 stack trace 노출 방지
+        import traceback
+        with st.expander("🔧 기술 상세 (담당자 문의용)"):
+            st.code(traceback.format_exc(), language="text")
 
 # ── 다운로드 영역 (고정) ─────────────────────────────────────
 if st.session_state.generated_result:
