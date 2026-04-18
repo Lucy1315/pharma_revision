@@ -1,4 +1,3 @@
-import base64
 import io
 import re
 import zipfile
@@ -11,50 +10,6 @@ import streamlit as st
 MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
-
-def make_download_anchor(data: bytes, filename: str, label: str, mime: str) -> str:
-    """st.download_button 대체 — base64 data URI 앵커.
-
-    클릭해도 Streamlit 스크립트 rerun이 발생하지 않으므로,
-    엑셀/워드 두 개 버튼이 서로의 상태를 건드리지 않고 동시에 유지된다.
-    """
-    b64 = base64.b64encode(data).decode("ascii")
-    return (
-        f'<a class="dl-btn" href="data:{mime};base64,{b64}" download="{filename}">'
-        f"{label}</a>"
-    )
-
-
-_DOWNLOAD_BTN_CSS = """
-<style>
-a.dl-btn {
-    display: block;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    background: #ffffff;
-    color: rgb(49, 51, 63) !important;
-    text-align: center;
-    border: 1px solid rgba(49, 51, 63, 0.2);
-    border-radius: 0.5rem;
-    text-decoration: none !important;
-    font-weight: 400;
-    font-size: 1rem;
-    line-height: 1.6;
-    box-sizing: border-box;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-}
-a.dl-btn:hover {
-    border-color: #FF4B4B;
-    color: #FF4B4B !important;
-}
-a.dl-btn:active {
-    background: #FF4B4B;
-    color: #ffffff !important;
-    border-color: #FF4B4B;
-}
-</style>
-"""
 
 from src.validator import load_and_validate, ValidationError
 from src.transformer import filter_invalid, transform_demo, transform_drug, transform_event, transform_assessment, detect_period
@@ -166,7 +121,6 @@ def parse_readme(raw: bytes) -> dict:
     return result
 
 st.set_page_config(page_title="PV 보고서 자동화", page_icon="📋", layout="wide")
-st.markdown(_DOWNLOAD_BTN_CSS, unsafe_allow_html=True)
 
 # ── 상태 초기화용 nonce (위젯 key를 바꿔 완전 초기화) ─────────
 if "nonce" not in st.session_state:
@@ -561,26 +515,27 @@ if st.session_state.generated_result:
     st.success(f"✅ 생성 완료 — 이상사례 **{result['n_events']}건** / 사례 **{result['n_cases']}건**")
 
     st.subheader("⑤ 다운로드")
+    # st.download_button 은 클릭 시 rerun을 발생시키지만, 파일 바이트가
+    # session_state.generated_result 에 유지되므로 두 버튼 모두 그대로 재렌더된다.
+    # key에 nonce 포함 — 🔄 새로고침 시에만 리셋, 일반 다운로드 클릭은 유지.
     col_dl1, col_dl2 = st.columns(2)
     with col_dl1:
-        st.markdown(
-            make_download_anchor(
-                result["xlsx_bytes"],
-                result["xlsx_name"],
-                "📊 원시자료 분석 엑셀 다운로드",
-                MIME_XLSX,
-            ),
-            unsafe_allow_html=True,
+        st.download_button(
+            label="📊 원시자료 분석 엑셀 다운로드",
+            data=result["xlsx_bytes"],
+            file_name=result["xlsx_name"],
+            mime=MIME_XLSX,
+            use_container_width=True,
+            key=f"dl_xlsx_{_n}",
         )
     with col_dl2:
-        st.markdown(
-            make_download_anchor(
-                result["docx_bytes"],
-                result["docx_name"],
-                "📄 안전관리보고서 Word 다운로드",
-                MIME_DOCX,
-            ),
-            unsafe_allow_html=True,
+        st.download_button(
+            label="📄 안전관리보고서 Word 다운로드",
+            data=result["docx_bytes"],
+            file_name=result["docx_name"],
+            mime=MIME_DOCX,
+            use_container_width=True,
+            key=f"dl_docx_{_n}",
         )
 
     st.info(
@@ -620,14 +575,13 @@ if st.session_state.generated_result:
         _saved_xlsx = st.session_state.edited_files.get("xlsx")
         if _saved_xlsx:
             st.success(f"📁 보관 중: **{_saved_xlsx['name']}**")
-            st.markdown(
-                make_download_anchor(
-                    _saved_xlsx["bytes"],
-                    _saved_xlsx["name"],
-                    f"⬇️ {_saved_xlsx['name']} 다시 다운로드",
-                    MIME_XLSX,
-                ),
-                unsafe_allow_html=True,
+            st.download_button(
+                label=f"⬇️ {_saved_xlsx['name']} 다시 다운로드",
+                data=_saved_xlsx["bytes"],
+                file_name=_saved_xlsx["name"],
+                mime=MIME_XLSX,
+                use_container_width=True,
+                key=f"dl_edited_xlsx_{_n}",
             )
 
     with up_col2:
@@ -644,12 +598,11 @@ if st.session_state.generated_result:
         _saved_docx = st.session_state.edited_files.get("docx")
         if _saved_docx:
             st.success(f"📁 보관 중: **{_saved_docx['name']}**")
-            st.markdown(
-                make_download_anchor(
-                    _saved_docx["bytes"],
-                    _saved_docx["name"],
-                    f"⬇️ {_saved_docx['name']} 다시 다운로드",
-                    MIME_DOCX,
-                ),
-                unsafe_allow_html=True,
+            st.download_button(
+                label=f"⬇️ {_saved_docx['name']} 다시 다운로드",
+                data=_saved_docx["bytes"],
+                file_name=_saved_docx["name"],
+                mime=MIME_DOCX,
+                use_container_width=True,
+                key=f"dl_edited_docx_{_n}",
             )
