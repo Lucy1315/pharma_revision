@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5;
+      color: #2D2A26;
+      padding: 36pt 56pt;
+      display: flex; flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .gold-rule { width: 56pt; height: 2pt; background: #B8860B; }
+    .hl {
+      background: linear-gradient(transparent 58%, #FFE066 58%);
+      padding: 0 2pt;
+    }
+    .corner-mark {
+      position: absolute; top: 36pt; right: 56pt;
+      width: 72pt; height: 72pt;
+      border: 1.5pt solid #B8860B;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .corner-mark p {
+      font-size: 8pt; letter-spacing: 0.15em;
+      color: #B8860B; font-weight: 500;
+      text-align: center; line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top tag -->
+  <div style="display: flex; align-items: center; gap: 14pt;">
+    <div class="gold-rule"></div>
+    <p style="font-size: 10pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">PHARMACOVIGILANCE AUTOMATION</p>
+  </div>
+
+  <!-- Corner circle mark -->
+  <div class="corner-mark">
+    <p>MFDS<br/>GUIDELINE<br/>99~115p</p>
+  </div>
+
+  <!-- Main title -->
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; margin-top: -20pt;">
+    <h1 style="font-size: 48pt; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; color: #2D2A26;">
+      PV 보고서<br/>
+      <span class="hl">자동화 에이전트</span>
+    </h1>
+    <p style="font-size: 16pt; color: #6B6560; margin-top: 24pt; line-height: 1.55; max-width: 520pt;">
+      식약처 품목갱신용 <em style="font-style: normal; color: #B8860B; font-weight: 600;">안전관리책임자 작성 자료</em>를<br/>
+      KIDS 원시자료에서 자동 생성합니다
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #DDD8D0; padding-top: 14pt;">
+    <div style="display: flex; gap: 48pt;">
+      <div>
+        <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">PROJECT</p>
+        <p style="font-size: 11pt; font-weight: 600; color: #2D2A26;">pv-report-agent</p>
+      </div>
+      <div>
+        <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">DEPLOY</p>
+        <p style="font-size: 11pt; font-weight: 600; color: #2D2A26;">pharmarevision.streamlit.app</p>
+      </div>
+      <div>
+        <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">DATE</p>
+        <p style="font-size: 11pt; font-weight: 600; color: #2D2A26;">2026</p>
+      </div>
+    </div>
+    <p style="font-size: 10pt; color: #B8860B; font-weight: 600; letter-spacing: 0.15em;">01 / 14</p>
+  </div>
+</body>
+</html>

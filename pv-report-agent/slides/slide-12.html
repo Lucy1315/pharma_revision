@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    .use-card {
+      background: #F0EBE3;
+      border: 1px solid #E0D8C8;
+      border-radius: 6pt;
+      padding: 14pt 14pt;
+      display: flex; flex-direction: column;
+    }
+    .use-card.primary {
+      background: #FAF2D6;
+      border-color: #D4AF37;
+    }
+    .use-icon {
+      font-size: 22pt; margin-bottom: 6pt;
+    }
+    .use-title {
+      font-size: 13pt; font-weight: 700; color: #2D2A26;
+      margin-bottom: 4pt; letter-spacing: -0.01em;
+    }
+    .use-desc {
+      font-size: 10pt; color: #6B6560; line-height: 1.5;
+    }
+    .tag {
+      display: inline-block;
+      padding: 1pt 6pt;
+      background: #B8860B; color: #FAF8F5;
+      font-size: 7.5pt; letter-spacing: 0.12em;
+      font-weight: 600; border-radius: 8pt;
+      margin-top: auto;
+      align-self: flex-start;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">09 · USE CASES</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">12 / 14</p>
+  </div>
+
+  <h1 style="font-size: 28pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.25;">
+    활용 방안 — <span class="hl">PV · RA · QA · 교육</span>
+  </h1>
+  <p style="font-size: 12pt; color: #6B6560; margin-top: 6pt;">갱신 주기를 넘어 다양한 포지션에서 재활용</p>
+
+  <!-- 5 cards: 2 row, primary featured first -->
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12pt; margin-top: 20pt; flex: 1;">
+    <div class="use-card primary" style="grid-row: span 2;">
+      <p class="use-icon">🏭</p>
+      <p class="use-title">품목갱신 실무</p>
+      <p class="use-desc">갱신 주기마다 즉시 초안 산출. 담당자는 내용 검토·허가사항 비교에 집중. <span class="hl">가장 큰 효과</span>가 나타나는 핵심 시나리오.</p>
+      <span class="tag" style="background: #8B6914; margin-top: 18pt;">PRIMARY</span>
+    </div>
+
+    <div class="use-card">
+      <p class="use-icon">📊</p>
+      <p class="use-title">분기·연간 사내 안전성 리뷰</p>
+      <p class="use-desc">분석 엑셀만 독립 활용 — SOC/PT · 중대성 현황 빠른 파악</p>
+    </div>
+
+    <div class="use-card">
+      <p class="use-icon">🔍</p>
+      <p class="use-title">내부 감사 &amp; 실사 대응</p>
+      <p class="use-desc">Line Listing + 집계 근거를 요청 즉시 재생성</p>
+    </div>
+
+    <div class="use-card">
+      <p class="use-icon">🧪</p>
+      <p class="use-title">신규 품목 모니터링</p>
+      <p class="use-desc">기간·품목코드만 바꿔 반복 실행</p>
+    </div>
+
+    <div class="use-card">
+      <p class="use-icon">🎓</p>
+      <p class="use-title">신입 PV 담당자 교육</p>
+      <p class="use-desc">가이드라인 구조와 도메인 룰 학습 도구</p>
+    </div>
+  </div>
+</body>
+</html>

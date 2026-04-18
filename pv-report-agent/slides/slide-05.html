@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    .stat-card {
+      background: #F0EBE3;
+      border: 1px solid #E0D8C8;
+      border-radius: 8pt;
+      padding: 22pt 20pt;
+      flex: 1;
+      display: flex; flex-direction: column;
+      position: relative;
+    }
+    .stat-card.accent {
+      background: #FAF2D6;
+      border-color: #D4AF37;
+    }
+    .stat-num {
+      font-size: 44pt; font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15; color: #2D2A26;
+      padding: 4pt 0;
+    }
+    .stat-unit {
+      font-size: 18pt; font-weight: 500;
+      color: #6B6560;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 8pt; letter-spacing: 0.18em; font-weight: 600;
+      color: #B8860B; margin-bottom: 10pt;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">02 · CORE VALUE</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">05 / 14</p>
+  </div>
+
+  <h1 style="font-size: 28pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.25;">
+    세 가지 <span class="hl">핵심 가치</span>
+  </h1>
+  <p style="font-size: 12pt; color: #6B6560; margin-top: 6pt;">시간 절감 · 수치 일관성 · 규제 적합성</p>
+
+  <!-- 3 cards -->
+  <div style="display: flex; gap: 16pt; margin-top: 24pt; flex: 1;">
+    <div class="stat-card">
+      <p class="badge">⏱ TIME</p>
+      <p class="stat-num">수 분</p>
+      <p style="font-size: 11pt; color: #9C958D; margin-top: 4pt;">← 기존: 수 시간</p>
+      <div style="margin-top: auto; padding-top: 16pt;">
+        <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">반복 작업 제거</p>
+        <p style="font-size: 10pt; color: #6B6560; margin-top: 4pt; line-height: 1.5;">
+          업로드 → 생성 → 다운로드.<br/>
+          갱신 주기마다 즉시 실행.
+        </p>
+      </div>
+    </div>
+
+    <div class="stat-card accent">
+      <p class="badge" style="color: #8B6914;">✅ CONSISTENCY</p>
+      <p class="stat-num" style="color: #8B6914;">100<span class="stat-unit" style="color: #8B6914;">%</span></p>
+      <p style="font-size: 11pt; color: #8B6914; margin-top: 4pt; font-weight: 500;">수치 일치</p>
+      <div style="margin-top: auto; padding-top: 16pt;">
+        <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">aggregator 단일 진입점</p>
+        <p style="font-size: 10pt; color: #6B6560; margin-top: 4pt; line-height: 1.5;">
+          Word ↔ Excel 동일 집계 함수 공유.<br/>
+          불일치 원천 차단.
+        </p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <p class="badge">📋 COMPLIANCE</p>
+      <p class="stat-num">99<span class="stat-unit">~</span>115<span class="stat-unit">p</span></p>
+      <p style="font-size: 11pt; color: #9C958D; margin-top: 4pt;">가이드라인 완전 준수</p>
+      <div style="margin-top: auto; padding-top: 16pt;">
+        <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">구조 내장</p>
+        <p style="font-size: 10pt; color: #6B6560; margin-top: 4pt; line-height: 1.5;">
+          표지·요약·(ㄱ)~(ㅂ) 섹션을<br/>
+          코드 템플릿으로 보장.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

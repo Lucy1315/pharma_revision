@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; }
+    .num {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 11pt; font-weight: 600;
+      color: #B8860B; letter-spacing: 0.05em;
+      min-width: 28pt;
+    }
+    .toc-row {
+      display: flex; align-items: baseline; gap: 14pt;
+      padding: 9pt 0;
+      border-bottom: 1px solid #E6DFD4;
+    }
+    .toc-row p.title { font-size: 13pt; color: #2D2A26; font-weight: 500; flex: 1; }
+    .toc-row p.note  { font-size: 10pt; color: #9C958D; }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">CONTENTS</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">02 / 14</p>
+  </div>
+
+  <h1 style="font-size: 30pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-bottom: 4pt;">
+    목차
+  </h1>
+  <p style="font-size: 12pt; color: #6B6560; margin-bottom: 18pt;">
+    문제 정의부터 <span class="hl">활용 방안</span>까지 10개 섹션으로 구성
+  </p>
+
+  <!-- TOC in 2 columns -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 56pt; flex: 1;">
+    <div>
+      <div class="toc-row"><p class="num">01</p><p class="title">문제 정의 — 왜 자동화인가</p><p class="note">p.3</p></div>
+      <div class="toc-row"><p class="num">02</p><p class="title">솔루션 개요 &amp; 핵심 가치</p><p class="note">p.4–5</p></div>
+      <div class="toc-row"><p class="num">03</p><p class="title">주요 기능</p><p class="note">p.6</p></div>
+      <div class="toc-row"><p class="num">04</p><p class="title">데이터 &amp; 도메인 룰</p><p class="note">p.7</p></div>
+      <div class="toc-row"><p class="num">05</p><p class="title">워크플로우</p><p class="note">p.8</p></div>
+    </div>
+    <div>
+      <div class="toc-row"><p class="num">06</p><p class="title">구현 화면 (Streamlit UI)</p><p class="note">p.9</p></div>
+      <div class="toc-row"><p class="num">07</p><p class="title">출력물 구조</p><p class="note">p.10</p></div>
+      <div class="toc-row"><p class="num">08</p><p class="title">기술 스택 &amp; 품질</p><p class="note">p.11</p></div>
+      <div class="toc-row"><p class="num">09</p><p class="title">활용 방안</p><p class="note">p.12</p></div>
+      <div class="toc-row"><p class="num">10</p><p class="title">다음 단계 &amp; Closing</p><p class="note">p.13–14</p></div>
+    </div>
+  </div>
+</body>
+</html>

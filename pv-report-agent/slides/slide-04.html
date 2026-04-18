@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    .block {
+      background: #F0EBE3;
+      border: 1px solid #E0D8C8;
+      border-radius: 6pt;
+      padding: 14pt 16pt;
+      flex: 1;
+    }
+    .arrow {
+      font-size: 28pt; color: #B8860B;
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">02 · SOLUTION</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">04 / 14</p>
+  </div>
+
+  <!-- Headline -->
+  <h1 style="font-size: 30pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.25;">
+    업로드 한 번으로<br/>
+    <span class="hl">Word 초안 + 분석 엑셀 동시 생성</span>
+  </h1>
+  <p style="font-size: 13pt; color: #6B6560; margin-top: 10pt;">
+    식약처 가이드라인 99~115p 구조를 코드로 내재화한 Streamlit 에이전트
+  </p>
+
+  <!-- Flow diagram -->
+  <div style="display: flex; align-items: stretch; gap: 14pt; margin-top: 28pt;">
+    <div class="block">
+      <p style="font-size: 9pt; color: #B8860B; letter-spacing: 0.18em; margin-bottom: 6pt; font-weight: 600;">INPUT</p>
+      <p style="font-size: 13pt; font-weight: 700; color: #2D2A26; margin-bottom: 6pt;">KIDS 원시자료</p>
+      <p style="font-size: 10pt; color: #6B6560; line-height: 1.5;">
+        ZIP 또는 개별 .txt<br/>
+        (드래그앤드롭 지원)<br/>
+        DEMO · DRUG · EVENT · ASSESSMENT
+      </p>
+    </div>
+
+    <div style="display: flex; align-items: center;"><span class="arrow">→</span></div>
+
+    <div class="block" style="background: #FAF2D6; border-color: #D4AF37;">
+      <p style="font-size: 9pt; color: #8B6914; letter-spacing: 0.18em; margin-bottom: 6pt; font-weight: 600;">AGENT</p>
+      <p style="font-size: 13pt; font-weight: 700; color: #2D2A26; margin-bottom: 6pt;">PV Report Agent</p>
+      <p style="font-size: 10pt; color: #6B6560; line-height: 1.5;">
+        validator → transformer<br/>
+        → joiner → aggregator<br/>
+        → report · excel builder
+      </p>
+    </div>
+
+    <div style="display: flex; align-items: center;"><span class="arrow">→</span></div>
+
+    <div class="block">
+      <p style="font-size: 9pt; color: #B8860B; letter-spacing: 0.18em; margin-bottom: 6pt; font-weight: 600;">OUTPUT</p>
+      <p style="font-size: 13pt; font-weight: 700; color: #2D2A26; margin-bottom: 6pt;">2개 파일 동시 생성</p>
+      <p style="font-size: 10pt; color: #6B6560; line-height: 1.5;">
+        📄 안전관리보고서 (.docx)<br/>
+        📊 원시자료 분석 (.xlsx)<br/>
+        8~9 시트 · 가이드라인 구조
+      </p>
+    </div>
+  </div>
+
+  <!-- Bottom proof -->
+  <div style="display: flex; align-items: center; gap: 18pt; margin-top: 24pt; padding-top: 16pt; border-top: 1px solid #DDD8D0;">
+    <p style="font-size: 9pt; color: #9C958D; letter-spacing: 0.18em;">PROOF</p>
+    <p style="font-size: 14pt; color: #2D2A26;">
+      수작업 보고서와 <span class="hl">핵심 수치 8/8 항목 100% 일치</span> · pytest 43개 통과
+    </p>
+  </div>
+</body>
+</html>

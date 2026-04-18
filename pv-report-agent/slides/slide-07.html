@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    code, .code {
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 10pt; color: #2D2A26;
+    }
+    .code-block {
+      background: #2D2A26; color: #F0EBE3;
+      border-radius: 6pt;
+      padding: 14pt 16pt;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 9.5pt; line-height: 1.55;
+    }
+    .code-comment { color: #C9A449; }
+    .code-kw { color: #E8D094; font-weight: 600; }
+    .code-str { color: #FAF2D6; }
+    .rule-row {
+      display: flex; gap: 12pt; align-items: baseline;
+      padding: 8pt 0;
+      border-bottom: 1px dashed #E0D8C8;
+    }
+    .rule-tag {
+      font-size: 9pt; font-weight: 700;
+      color: #B8860B; letter-spacing: 0.1em;
+      min-width: 32pt;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">04 · DOMAIN RULES</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">07 / 14</p>
+  </div>
+
+  <h1 style="font-size: 28pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.25;">
+    약물감시 핵심 룰을 <span class="hl">코드로 고정</span>
+  </h1>
+  <p style="font-size: 12pt; color: #6B6560; margin-top: 6pt;">.claude/rules/domain.md에 문서화 · transformer/joiner 모듈에 구현</p>
+
+  <!-- Two columns: code snippet + rule list -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20pt; margin-top: 18pt; flex: 1;">
+    <div class="code-block">
+<span class="code-comment"># 1. 무효 건 제거 (최우선)</span>
+df = df[df[<span class="code-str">'REPRT_CHANGE_CD'</span>] != <span class="code-kw">1</span>]
+
+<span class="code-comment"># 2. 보수적 의약품 필터 — 1/2/3 모두</span>
+drug_df[<span class="code-str">'DRUG_GB'</span>].isin([<span class="code-kw">1</span>,<span class="code-kw">2</span>,<span class="code-kw">3</span>])
+
+<span class="code-comment"># 3. 중대성 — SE_* 6개 중 하나라도 Y</span>
+df[<span class="code-str">'IS_SERIOUS'</span>] = df[SE_COLS]\
+    .eq(<span class="code-str">'Y'</span>).any(axis=<span class="code-kw">1</span>)
+
+<span class="code-comment"># 4. 통계 무결성 검증</span>
+<span class="code-kw">assert</span> len(df_merged) == \
+    line_listing_row_count
+    </div>
+
+    <div>
+      <div class="rule-row">
+        <p class="rule-tag">R-01</p>
+        <div>
+          <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">무효 건 제거</p>
+          <p style="font-size: 10pt; color: #6B6560;"><code>REPRT_CHANGE_CD=1</code> 삭제 건 우선 필터</p>
+        </div>
+      </div>
+      <div class="rule-row">
+        <p class="rule-tag">R-02</p>
+        <div>
+          <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">보수적 의약품 필터</p>
+          <p style="font-size: 10pt; color: #6B6560;">의심·병용·상호작용 모두 포함 (DRUG_GB ∈ {1,2,3})</p>
+        </div>
+      </div>
+      <div class="rule-row">
+        <p class="rule-tag">R-03</p>
+        <div>
+          <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">중대성 플래그</p>
+          <p style="font-size: 10pt; color: #6B6560;">SE_DEATH/LIFE_MENACE/HSPTLZ/FNCT/ANMLY/ETC</p>
+        </div>
+      </div>
+      <div class="rule-row">
+        <p class="rule-tag">R-04</p>
+        <div>
+          <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">인과성 우선순위</p>
+          <p style="font-size: 10pt; color: #6B6560;">동일 KAERS_NO 내 의심약물(DRUG_GB=1) 우선</p>
+        </div>
+      </div>
+      <div class="rule-row" style="border-bottom: none;">
+        <p class="rule-tag">R-05</p>
+        <div>
+          <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">Line Listing 행 분리</p>
+          <p style="font-size: 10pt; color: #6B6560;">1사례 × 다중 이상사례 → 이상사례별 1행</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

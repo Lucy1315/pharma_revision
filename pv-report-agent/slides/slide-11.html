@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 26pt 48pt;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    .chip {
+      display: inline-block;
+      padding: 4pt 10pt;
+      border: 1px solid #B8860B;
+      border-radius: 14pt;
+      font-size: 10pt; color: #B8860B;
+      font-weight: 500;
+      margin-right: 4pt; margin-bottom: 6pt;
+    }
+    .chip.solid {
+      background: #B8860B; color: #FAF8F5;
+    }
+    .metric {
+      background: #F0EBE3;
+      border-left: 3pt solid #B8860B;
+      padding: 10pt 12pt;
+      border-radius: 0 4pt 4pt 0;
+    }
+    .metric.gold {
+      background: #FAF2D6; border-color: #D4AF37;
+    }
+    .metric-num {
+      font-size: 26pt; font-weight: 700;
+      color: #2D2A26; letter-spacing: -0.02em;
+      line-height: 1.2;
+      padding: 2pt 0;
+    }
+    .metric-label {
+      font-size: 10pt; color: #6B6560;
+      margin-top: 6pt;
+    }
+    .metric-desc {
+      font-size: 10pt; color: #6B6560;
+      margin-top: 6pt;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">08 · TECH &amp; QUALITY</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">11 / 14</p>
+  </div>
+
+  <h1 style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.2;">
+    기술 스택 &amp; <span class="hl">TDD 기반 품질 관리</span>
+  </h1>
+
+  <!-- Two columns: tech / metrics -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18pt; margin-top: 14pt; flex: 1; min-height: 0;">
+    <!-- Tech -->
+    <div>
+      <p style="font-size: 9pt; color: #9C958D; letter-spacing: 0.18em; margin-bottom: 8pt; font-weight: 600;">TECH STACK</p>
+      <div style="margin-bottom: 10pt;">
+        <p style="font-size: 9.5pt; color: #6B6560; margin-bottom: 4pt;">Language &amp; Data</p>
+        <span class="chip solid">Python 3.11</span>
+        <span class="chip">pandas</span>
+        <span class="chip">numpy</span>
+        <span class="chip">openpyxl</span>
+      </div>
+      <div style="margin-bottom: 10pt;">
+        <p style="font-size: 9.5pt; color: #6B6560; margin-bottom: 4pt;">Document &amp; UI</p>
+        <span class="chip">python-docx</span>
+        <span class="chip">Streamlit</span>
+      </div>
+      <div style="margin-bottom: 10pt;">
+        <p style="font-size: 9.5pt; color: #6B6560; margin-bottom: 4pt;">External Data</p>
+        <span class="chip">공공데이터포털 API</span>
+        <span class="chip">nedrug scraper</span>
+      </div>
+      <div>
+        <p style="font-size: 9.5pt; color: #6B6560; margin-bottom: 4pt;">Deploy</p>
+        <span class="chip">Streamlit Cloud</span>
+        <span class="chip">runtime.txt = 3.11</span>
+      </div>
+    </div>
+
+    <!-- Quality metrics -->
+    <div style="display: flex; flex-direction: column; gap: 8pt;">
+      <p style="font-size: 9pt; color: #9C958D; letter-spacing: 0.18em; font-weight: 600;">QUALITY METRICS</p>
+
+      <div class="metric gold">
+        <p class="metric-num">43<span style="font-size: 14pt; color: #8B6914;"> tests</span></p>
+        <p class="metric-label">pytest 43개 통과 — validator · transformer · aggregator · product_scraper</p>
+      </div>
+
+      <div class="metric gold">
+        <p class="metric-num">8<span style="font-size: 14pt; color: #8B6914;"> / 8</span></p>
+        <p class="metric-label"><span class="hl">수작업 보고서와 8개 핵심 수치 100% 일치</span> (compare.py 회귀 검증)</p>
+      </div>
+
+      <div class="metric">
+        <p style="font-size: 11pt; font-weight: 600; color: #2D2A26;">📚 도메인 규칙 문서화</p>
+        <p class="metric-desc" style="font-size: 9pt;"><code>.claude/rules/domain.md</code> — WHOART SOC 매핑 · 검토 마커 트리거</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

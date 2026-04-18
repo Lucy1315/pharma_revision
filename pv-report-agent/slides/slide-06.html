@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 32pt 56pt;
+      display: flex; flex-direction: column;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
+    .f-card {
+      background: #F0EBE3;
+      border: 1px solid #E0D8C8;
+      border-radius: 6pt;
+      padding: 14pt 16pt;
+      display: flex; flex-direction: column;
+    }
+    .f-card.gold {
+      background: #FAF2D6; border-color: #D4AF37;
+    }
+    .f-icon {
+      font-size: 18pt;
+      margin-bottom: 6pt;
+    }
+    .f-title {
+      font-size: 13pt; font-weight: 700; color: #2D2A26;
+      letter-spacing: -0.01em; margin-bottom: 4pt;
+    }
+    .f-desc {
+      font-size: 10pt; color: #6B6560; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">03 · FEATURES</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">06 / 14</p>
+  </div>
+
+  <h1 style="font-size: 28pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; line-height: 1.25;">
+    주요 기능 — <span class="hl">end-to-end 파이프라인</span>
+  </h1>
+  <p style="font-size: 12pt; color: #6B6560; margin-top: 6pt;">데이터 입수부터 Word 문서화까지 단절 없이 연결</p>
+
+  <!-- 2x3 grid -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12pt; margin-top: 20pt; flex: 1;">
+    <div class="f-card gold">
+      <p class="f-icon">🔎</p>
+      <p class="f-title">3-way 제품 조회</p>
+      <p class="f-desc">품목기준코드 / 제품명 / nedrug URL — 공공데이터포털 API + 스크래핑 fallback</p>
+    </div>
+    <div class="f-card">
+      <p class="f-icon">📑</p>
+      <p class="f-title">README.txt 자동 감지</p>
+      <p class="f-desc">품목코드·보고기간을 파싱해 세션 상태에 선반영</p>
+    </div>
+    <div class="f-card gold">
+      <p class="f-icon">🧮</p>
+      <p class="f-title">공유 집계 모듈</p>
+      <p class="f-desc">aggregator.compute_aggregates() — Word/Excel 수치 일관성 보장</p>
+    </div>
+    <div class="f-card">
+      <p class="f-icon">📊</p>
+      <p class="f-title">8시트 분석 엑셀</p>
+      <p class="f-desc">요약·Word연동·Line Listing·DEMO·DRUG·EVENT·ASSESSMENT·코드참조</p>
+    </div>
+    <div class="f-card">
+      <p class="f-icon">📄</p>
+      <p class="f-title">Word 초안 생성</p>
+      <p class="f-desc">표지·요약·상세·(ㄱ)~(ㅂ) 섹션을 가이드라인 구조대로 자동 작성</p>
+    </div>
+    <div class="f-card gold">
+      <p class="f-icon">🚦</p>
+      <p class="f-title">검토 마커 3색</p>
+      <p class="f-desc">노랑(입력 필요) · 빨강(미확인 코드) · 파랑(검토 필요)</p>
+    </div>
+  </div>
+</body>
+</html>

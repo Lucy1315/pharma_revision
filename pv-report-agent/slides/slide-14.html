@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 720pt; height: 405pt;
+      font-family: 'Pretendard', sans-serif;
+      background: #FAF8F5; color: #2D2A26;
+      padding: 36pt 56pt;
+      display: flex; flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; }
+    .big-circle {
+      position: absolute;
+      bottom: 20pt; right: 20pt;
+      width: 220pt; height: 220pt;
+      border: 1.5pt solid #D4AF37;
+      border-radius: 50%;
+      opacity: 0.45;
+    }
+    .big-circle-2 {
+      position: absolute;
+      bottom: 60pt; right: 60pt;
+      width: 140pt; height: 140pt;
+      border: 1pt solid #B8860B;
+      border-radius: 50%;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="big-circle"></div>
+  <div class="big-circle-2"></div>
+
+  <!-- Top -->
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
+      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">CLOSING</p>
+    </div>
+    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">14 / 14</p>
+  </div>
+
+  <!-- Main -->
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; z-index: 2;">
+    <p style="font-size: 12pt; color: #B8860B; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 14pt;">THANK YOU</p>
+    <h1 style="font-size: 44pt; font-weight: 700; letter-spacing: -0.03em; line-height: 1.18; color: #2D2A26; max-width: 540pt;">
+      수작업 대신<br/>
+      <span class="hl" style="font-weight: 700;">검토에 집중하세요</span>
+    </h1>
+    <p style="font-size: 14pt; color: #6B6560; margin-top: 22pt; max-width: 480pt; line-height: 1.55;">
+      PV 보고서 자동화 에이전트로, 품목갱신 자료 작성 시간을 <em style="font-style: normal; color: #B8860B; font-weight: 600;">수 시간에서 수 분</em>으로.
+    </p>
+  </div>
+
+  <!-- Footer CTA -->
+  <div style="display: flex; gap: 40pt; border-top: 1px solid #DDD8D0; padding-top: 16pt; z-index: 2;">
+    <div>
+      <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">LIVE DEMO</p>
+      <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">pharmarevision.streamlit.app</p>
+    </div>
+    <div>
+      <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">SOURCE</p>
+      <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">github.com/Lucy1315/pharma_revision</p>
+    </div>
+    <div>
+      <p style="font-size: 8pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 4pt;">CONTACT</p>
+      <p style="font-size: 12pt; font-weight: 600; color: #2D2A26;">popice76@gmail.com</p>
+    </div>
+  </div>
+</body>
+</html>
