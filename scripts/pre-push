@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# push 전 pv-report-agent 테스트 자동 실행. 실패 시 push 차단.
+# 우회: `git push --no-verify` (권장하지 않음)
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+AGENT_DIR="$REPO_ROOT/pv-report-agent"
+
+if [ ! -d "$AGENT_DIR/tests" ]; then
+  exit 0
+fi
+
+echo "🧪 [pre-push] pv-report-agent 테스트 실행..."
+cd "$AGENT_DIR"
+python3 -m pytest tests/ -q

@@ -12,6 +12,7 @@ venv/
 
 # 생성된 출력 파일
 pv-report-agent/data/output/
+.qa-reports/
 
 # 민감 참조 문서 (대용량 PDF/Excel)
 *.pdf
