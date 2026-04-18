@@ -510,14 +510,18 @@ if st.button("🚀 보고서 생성", type="primary", disabled=not ready):
             st.code(traceback.format_exc(), language="text")
 
 # ── 다운로드 영역 (고정) ─────────────────────────────────────
-if st.session_state.generated_result:
+# @st.fragment 으로 격리 — 다운로드 버튼 클릭 시 전체 스크립트가 rerun되지 않고
+# 이 블록만 rerun 되므로 상단 업로드/조회 영역의 어떤 state 변화도 다운로드 버튼을
+# 건드리지 못한다. (이전에 버튼이 사라지던 근본 원인 제거)
+@st.fragment
+def _render_downloads_and_edits(nonce: int) -> None:
+    if not st.session_state.get("generated_result"):
+        return
     result = st.session_state.generated_result
+
     st.success(f"✅ 생성 완료 — 이상사례 **{result['n_events']}건** / 사례 **{result['n_cases']}건**")
 
     st.subheader("⑤ 다운로드")
-    # st.download_button 은 클릭 시 rerun을 발생시키지만, 파일 바이트가
-    # session_state.generated_result 에 유지되므로 두 버튼 모두 그대로 재렌더된다.
-    # key에 nonce 포함 — 🔄 새로고침 시에만 리셋, 일반 다운로드 클릭은 유지.
     col_dl1, col_dl2 = st.columns(2)
     with col_dl1:
         st.download_button(
@@ -526,7 +530,7 @@ if st.session_state.generated_result:
             file_name=result["xlsx_name"],
             mime=MIME_XLSX,
             use_container_width=True,
-            key=f"dl_xlsx_{_n}",
+            key=f"dl_xlsx_{nonce}",
         )
     with col_dl2:
         st.download_button(
@@ -535,7 +539,7 @@ if st.session_state.generated_result:
             file_name=result["docx_name"],
             mime=MIME_DOCX,
             use_container_width=True,
-            key=f"dl_docx_{_n}",
+            key=f"dl_docx_{nonce}",
         )
 
     st.info(
@@ -565,7 +569,7 @@ if st.session_state.generated_result:
         edited_xlsx = st.file_uploader(
             "수정본 엑셀 업로드 (.xlsx)",
             type=["xlsx", "xlsm", "xls"],
-            key=f"edited_xlsx_up_{_n}",
+            key=f"edited_xlsx_up_{nonce}",
         )
         if edited_xlsx is not None:
             st.session_state.edited_files["xlsx"] = {
@@ -581,14 +585,14 @@ if st.session_state.generated_result:
                 file_name=_saved_xlsx["name"],
                 mime=MIME_XLSX,
                 use_container_width=True,
-                key=f"dl_edited_xlsx_{_n}",
+                key=f"dl_edited_xlsx_{nonce}",
             )
 
     with up_col2:
         edited_docx = st.file_uploader(
             "수정본 워드 업로드 (.docx)",
             type=["docx", "doc"],
-            key=f"edited_docx_up_{_n}",
+            key=f"edited_docx_up_{nonce}",
         )
         if edited_docx is not None:
             st.session_state.edited_files["docx"] = {
@@ -604,5 +608,9 @@ if st.session_state.generated_result:
                 file_name=_saved_docx["name"],
                 mime=MIME_DOCX,
                 use_container_width=True,
-                key=f"dl_edited_docx_{_n}",
+                key=f"dl_edited_docx_{nonce}",
             )
+
+
+if st.session_state.get("generated_result"):
+    _render_downloads_and_edits(_n)
