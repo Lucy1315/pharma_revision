@@ -344,37 +344,30 @@ with col_right:
                                  help="업로드된 DEMO.txt에서 자동 감지")
 
     st.subheader("④ 제품 정보 확인/수정")
+
+    # 제품 조회 결과가 바뀐 시점에만 session_state 에 반영 (사용자 수정은 보존)
+    if product and product.item_name:
+        _prod_sig = (product.item_seq, product.item_name, product.company_name)
+        _prod_sig_key = f"_last_product_sig_{_n}"
+        if st.session_state.get(_prod_sig_key) != _prod_sig:
+            st.session_state[_prod_sig_key] = _prod_sig
+            st.session_state[f"drug_code_{_n}"] = product.item_seq or ""
+            st.session_state[f"drug_name_{_n}"] = product.item_name or ""
+            st.session_state[f"company_{_n}"] = product.company_name or ""
+            st.session_state[f"ingredient_{_n}"] = product.ingredient_name or ""
+            st.session_state[f"appr_date_{_n}"] = product.approval_date or ""
+            st.session_state[f"appr_num_{_n}"] = product.approval_number or product.item_seq or ""
+
     drug_code_input = st.text_input(
         "의약품 코드 (품목기준코드)",
-        value=product.item_seq if product else "",
         placeholder="자동 감지 또는 직접 입력",
         key=f"drug_code_{_n}",
     )
-    drug_name = st.text_input(
-        "제품명",
-        value=product.item_name if product else "",
-        key=f"drug_name_{_n}",
-    )
-    company_name = st.text_input(
-        "회사명",
-        value=product.company_name if product else "",
-        key=f"company_{_n}",
-    )
-    ingredient_name = st.text_input(
-        "성분명",
-        value=product.ingredient_name if product else "",
-        key=f"ingredient_{_n}",
-    )
-    approval_date = st.text_input(
-        "허가일",
-        value=product.approval_date if product else "",
-        key=f"appr_date_{_n}",
-    )
-    approval_number = st.text_input(
-        "허가번호",
-        value=(product.approval_number or product.item_seq) if product else "",
-        key=f"appr_num_{_n}",
-    )
+    drug_name = st.text_input("제품명", key=f"drug_name_{_n}")
+    company_name = st.text_input("회사명", key=f"company_{_n}")
+    ingredient_name = st.text_input("성분명", key=f"ingredient_{_n}")
+    approval_date = st.text_input("허가일", key=f"appr_date_{_n}")
+    approval_number = st.text_input("허가번호", key=f"appr_num_{_n}")
 
 # ── 업로드 상태 ─────────────────────────────────────────────
 st.divider()
