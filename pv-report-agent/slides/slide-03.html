@@ -7,81 +7,63 @@
     body {
       width: 720pt; height: 405pt;
       font-family: 'Pretendard', sans-serif;
-      background: #FAF8F5; color: #2D2A26;
-      padding: 32pt 56pt;
+      background: #FAF8F5;
+      color: #2D2A26;
+      padding: 36pt 56pt;
       display: flex; flex-direction: column;
+      position: relative;
+      overflow: hidden;
     }
-    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; font-weight: 600; }
-    .pain-row {
-      display: flex; align-items: flex-start; gap: 14pt;
-      padding: 11pt 0;
-      border-bottom: 1px dashed #E0D8C8;
+    .gold-rule { width: 56pt; height: 2pt; background: #B8860B; }
+    .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; }
+    .features { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt 28pt; }
+    .feat {
+      display: flex; gap: 10pt; align-items: flex-start;
+      font-size: 10.5pt; line-height: 1.45; color: #4A4640;
     }
-    .pain-num {
-      font-size: 10pt; font-weight: 700;
-      color: #B8860B; letter-spacing: 0.1em;
-      min-width: 30pt; padding-top: 2pt;
+    .feat .ico { font-size: 15pt; flex-shrink: 0; width: 20pt; }
+    .feat strong { color: #2D2A26; font-weight: 700; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16pt; margin-top: 14pt; }
+    .card {
+      background: #FFFFFF; border: 1pt solid #E5DFD5;
+      border-radius: 4pt; padding: 14pt;
+      text-align: center;
     }
+    .card.emph { border: 1.5pt solid #B8860B; background: #FFFAEC; }
+    .card .big { font-size: 20pt; font-weight: 700; color: #2D2A26; letter-spacing: -0.02em; }
+    .card .lbl { font-size: 9pt; color: #9C958D; letter-spacing: 0.12em; margin-top: 6pt; }
+    .pageno { font-size: 10pt; color: #B8860B; font-weight: 600; letter-spacing: 0.15em; }
   </style>
 </head>
 <body>
-  <!-- Top -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22pt;">
-    <div style="display: flex; align-items: center; gap: 12pt;">
-      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
-      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">01 · PROBLEM</p>
-    </div>
-    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">03 / 14</p>
+  <div style="display: flex; align-items: center; gap: 14pt;">
+    <div class="gold-rule"></div>
+    <p style="font-size: 10pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">FEATURES · VALUE</p>
   </div>
 
-  <!-- Two-column layout -->
-  <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 44pt; flex: 1;">
-    <!-- Left: Statement -->
-    <div style="display: flex; flex-direction: column; justify-content: center;">
-      <p style="font-size: 11pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 8pt;">THE PROBLEM</p>
-      <h1 style="font-size: 30pt; font-weight: 700; line-height: 1.3; letter-spacing: -0.02em; color: #2D2A26;">
-        품목갱신마다 반복되는<br/>
-        <span class="hl">수작업 집계&amp;문서화</span>
-      </h1>
-      <div style="margin-top: 24pt; padding: 14pt 18pt; background: #F0EBE3; border-left: 3pt solid #B8860B;">
-        <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.12em; margin-bottom: 4pt;">현재 소요 시간</p>
-        <p style="font-size: 22pt; font-weight: 700; color: #2D2A26;">담당자 1인당 <span style="color: #B8860B;">수 시간</span></p>
-        <p style="font-size: 11pt; color: #6B6560; margin-top: 4pt;">품목 1건당, 갱신 주기마다 반복</p>
-      </div>
-    </div>
+  <h2 style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-top: 14pt;">
+    데이터 파이프라인부터 <span class="hl">문서화까지</span>
+  </h2>
 
-    <!-- Right: Pain points -->
-    <div style="display: flex; flex-direction: column; justify-content: center;">
-      <p style="font-size: 11pt; color: #9C958D; letter-spacing: 0.15em; margin-bottom: 10pt;">WHAT SLOWS THE TEAM</p>
-      <div class="pain-row">
-        <p class="pain-num">01</p>
-        <div>
-          <p style="font-size: 13pt; font-weight: 600; color: #2D2A26; margin-bottom: 2pt;">원시자료 4종 수동 파싱</p>
-          <p style="font-size: 11pt; color: #6B6560;">DEMO·DRUG·EVENT·ASSESSMENT — EUC-KR / UTF-8 혼재</p>
-        </div>
-      </div>
-      <div class="pain-row">
-        <p class="pain-num">02</p>
-        <div>
-          <p style="font-size: 13pt; font-weight: 600; color: #2D2A26; margin-bottom: 2pt;">가이드라인 구조 맞춤 재작성</p>
-          <p style="font-size: 11pt; color: #6B6560;">식약처 99~115p 표·문단 수작업</p>
-        </div>
-      </div>
-      <div class="pain-row">
-        <p class="pain-num">03</p>
-        <div>
-          <p style="font-size: 13pt; font-weight: 600; color: #2D2A26; margin-bottom: 2pt;">집계 수치 교차 검증</p>
-          <p style="font-size: 11pt; color: #6B6560;">중대성·인과성·SOC — Word ↔ Excel 수치 일치 확인</p>
-        </div>
-      </div>
-      <div class="pain-row" style="border-bottom: none;">
-        <p class="pain-num">04</p>
-        <div>
-          <p style="font-size: 13pt; font-weight: 600; color: #2D2A26; margin-bottom: 2pt;">허가정보 조회·표지 작성</p>
-          <p style="font-size: 11pt; color: #6B6560;">nedrug / 공공데이터포털 반복 조회</p>
-        </div>
-      </div>
+  <div style="margin-top: 18pt;">
+    <div class="features">
+      <div class="feat"><div class="ico">🔎</div><p><strong>2-way 제품 조회</strong><br/>품목기준코드 · 제품명 검색<br/><span style="color:#9C958D; font-size:9.5pt;">공공데이터포털 API + nedrug 확인 링크</span></p></div>
+      <div class="feat"><div class="ico">📑</div><p><strong>README.txt 자동 감지</strong><br/>품목코드 · 보고기간 자동 선반영</p></div>
+      <div class="feat"><div class="ico">🧮</div><p><strong>공유 집계 모듈</strong> (<code style="font-size:9.5pt;">aggregator.py</code>)<br/>Word ↔ Excel 수치 일관성 보장</p></div>
+      <div class="feat"><div class="ico">📊</div><p><strong>8시트 분석 엑셀 + Word 초안</strong><br/>표지·요약·(ㄱ)~(ㅂ) 섹션 자동 생성</p></div>
+      <div class="feat"><div class="ico">🚦</div><p><strong>검토 마커</strong><br/>노랑(사용자 입력) · 빨강(미확인 코드) · 파랑(검토 필요)</p></div>
+      <div class="feat"><div class="ico">🔗</div><p><strong>nedrug 확인 링크</strong><br/>조회 결과 검증용 외부 링크 자동 생성</p></div>
     </div>
+  </div>
+
+  <div class="cards" style="margin-top: auto;">
+    <div class="card"><p class="big">⏱ 수 시간 → 수 분</p><p class="lbl">TIME SAVED</p></div>
+    <div class="card emph"><p class="big">✅ 100% 수치 일치</p><p class="lbl">WORD ↔ EXCEL</p></div>
+    <div class="card"><p class="big">📋 99~115p 준수</p><p class="lbl">MFDS GUIDELINE</p></div>
+  </div>
+
+  <div style="border-top: 1px solid #DDD8D0; padding-top: 10pt; display: flex; justify-content: flex-end; margin-top: 14pt;">
+    <p class="pageno">03 / 06</p>
   </div>
 </body>
 </html>

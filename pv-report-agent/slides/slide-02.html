@@ -7,59 +7,54 @@
     body {
       width: 720pt; height: 405pt;
       font-family: 'Pretendard', sans-serif;
-      background: #FAF8F5; color: #2D2A26;
-      padding: 32pt 56pt;
+      background: #FAF8F5;
+      color: #2D2A26;
+      padding: 36pt 56pt;
       display: flex; flex-direction: column;
+      position: relative;
+      overflow: hidden;
     }
+    .gold-rule { width: 56pt; height: 2pt; background: #B8860B; }
     .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; }
-    .num {
-      font-family: 'Pretendard', sans-serif;
-      font-size: 11pt; font-weight: 600;
-      color: #B8860B; letter-spacing: 0.05em;
-      min-width: 28pt;
-    }
-    .toc-row {
-      display: flex; align-items: baseline; gap: 14pt;
-      padding: 9pt 0;
-      border-bottom: 1px solid #E6DFD4;
-    }
-    .toc-row p.title { font-size: 13pt; color: #2D2A26; font-weight: 500; flex: 1; }
-    .toc-row p.note  { font-size: 10pt; color: #9C958D; }
+    .col-title { font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600; margin-bottom: 12pt; }
+    .item { display: flex; gap: 10pt; margin-bottom: 10pt; font-size: 11pt; line-height: 1.5; color: #4A4640; }
+    .bullet { flex-shrink: 0; width: 6pt; height: 6pt; border-radius: 50%; margin-top: 5pt; }
+    .b-muted { background: #C9A876; }
+    .b-gold { background: #B8860B; }
+    .pageno { font-size: 10pt; color: #B8860B; font-weight: 600; letter-spacing: 0.15em; }
   </style>
 </head>
 <body>
-  <!-- Top -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22pt;">
-    <div style="display: flex; align-items: center; gap: 12pt;">
-      <div style="width: 36pt; height: 2pt; background: #B8860B;"></div>
-      <p style="font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">CONTENTS</p>
-    </div>
-    <p style="font-size: 10pt; color: #9C958D; letter-spacing: 0.15em;">02 / 14</p>
+  <div style="display: flex; align-items: center; gap: 14pt;">
+    <div class="gold-rule"></div>
+    <p style="font-size: 10pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">PROBLEM × SOLUTION</p>
   </div>
 
-  <h1 style="font-size: 30pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-bottom: 4pt;">
-    목차
-  </h1>
-  <p style="font-size: 12pt; color: #6B6560; margin-bottom: 18pt;">
-    문제 정의부터 <span class="hl">활용 방안</span>까지 10개 섹션으로 구성
-  </p>
+  <h2 style="font-size: 26pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-top: 16pt;">
+    수작업 집계·문서화, <span class="hl">업로드 한 번으로</span>
+  </h2>
 
-  <!-- TOC in 2 columns -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 56pt; flex: 1;">
+  <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 40pt; margin-top: 28pt;">
     <div>
-      <div class="toc-row"><p class="num">01</p><p class="title">문제 정의 — 왜 자동화인가</p><p class="note">p.3</p></div>
-      <div class="toc-row"><p class="num">02</p><p class="title">솔루션 개요 &amp; 핵심 가치</p><p class="note">p.4–5</p></div>
-      <div class="toc-row"><p class="num">03</p><p class="title">주요 기능</p><p class="note">p.6</p></div>
-      <div class="toc-row"><p class="num">04</p><p class="title">데이터 &amp; 도메인 룰</p><p class="note">p.7</p></div>
-      <div class="toc-row"><p class="num">05</p><p class="title">워크플로우</p><p class="note">p.8</p></div>
+      <p class="col-title">PROBLEM · 현재</p>
+      <div class="item"><div class="bullet b-muted"></div><p>KIDS 원시자료 4종(DEMO·DRUG·EVENT·ASSESSMENT) 수동 파싱<br/><span style="color:#9C958D; font-size:9.5pt;">EUC-KR / UTF-8 혼재</span></p></div>
+      <div class="item"><div class="bullet b-muted"></div><p>가이드라인 99~115p 구조에 맞춰 표·문단 수작업 재작성</p></div>
+      <div class="item"><div class="bullet b-muted"></div><p>중대성·인과성·SOC 분류 집계 수치<br/>교차 검증 필요</p></div>
+      <div class="item"><div class="bullet b-muted"></div><p>제품 허가정보 조회 및 표지 작성</p></div>
     </div>
-    <div>
-      <div class="toc-row"><p class="num">06</p><p class="title">구현 화면 (Streamlit UI)</p><p class="note">p.9</p></div>
-      <div class="toc-row"><p class="num">07</p><p class="title">출력물 구조</p><p class="note">p.10</p></div>
-      <div class="toc-row"><p class="num">08</p><p class="title">기술 스택 &amp; 품질</p><p class="note">p.11</p></div>
-      <div class="toc-row"><p class="num">09</p><p class="title">활용 방안</p><p class="note">p.12</p></div>
-      <div class="toc-row"><p class="num">10</p><p class="title">다음 단계 &amp; Closing</p><p class="note">p.13–14</p></div>
+
+    <div style="border-left: 1pt solid #DDD8D0; padding-left: 32pt;">
+      <p class="col-title">SOLUTION · 자동화</p>
+      <div class="item"><div class="bullet b-gold"></div><p>업로드 한 번 → <strong style="color:#2D2A26;">Word 초안 + 분석 엑셀 동시 생성</strong></p></div>
+      <div class="item"><div class="bullet b-gold"></div><p>공공데이터포털 API 로 제품 정보 자동 조회</p></div>
+      <div class="item"><div class="bullet b-gold"></div><p>도메인 룰을 코드로 고정 — 중대성·인과성·SOC 일관 처리</p></div>
+      <div class="item"><div class="bullet b-gold"></div><p>Streamlit Cloud 배포<br/><span style="color:#B8860B; font-size:10pt; font-weight:600;">pharmarevision.streamlit.app</span></p></div>
     </div>
+  </div>
+
+  <div style="border-top: 1px solid #DDD8D0; padding-top: 12pt; display: flex; justify-content: space-between; align-items: center;">
+    <p style="font-size: 11pt; color: #2D2A26;">담당자 1인당 품목당 <span class="hl"><strong>수 시간 → 수 분</strong></span></p>
+    <p class="pageno">02 / 06</p>
   </div>
 </body>
 </html>
