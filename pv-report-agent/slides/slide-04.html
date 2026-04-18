@@ -31,7 +31,7 @@
     .step .title { font-size: 11pt; font-weight: 700; color: #2D2A26; line-height: 1.25; }
     .step .desc { font-size: 8.5pt; color: #6B6560; line-height: 1.35; }
     .ui-row {
-      margin-top: 18pt; padding: 12pt 14pt;
+      margin-top: 16pt; padding: 12pt 14pt;
       background: #F3EEE5; border-radius: 4pt;
       display: flex; gap: 14pt; align-items: center;
     }
@@ -39,13 +39,19 @@
       font-size: 9pt; letter-spacing: 0.18em; color: #B8860B;
       font-weight: 700; flex-shrink: 0;
     }
-    .ui-sections { display: flex; gap: 12pt; flex-wrap: wrap; }
+    .ui-sections { display: flex; gap: 10pt; flex-wrap: wrap; }
     .ui-chip {
       font-size: 10pt; color: #2D2A26;
       padding: 3pt 8pt; background: #FFFFFF; border: 1pt solid #DDD8D0;
       border-radius: 3pt;
     }
     .ui-chip strong { color: #B8860B; margin-right: 4pt; }
+    .caption {
+      margin-top: 10pt;
+      font-size: 10.5pt; color: #4A4640; line-height: 1.5;
+      padding-left: 14pt; border-left: 2pt solid #B8860B;
+    }
+    .caption strong { color: #2D2A26; font-weight: 700; }
     .pageno { font-size: 10pt; color: #B8860B; font-weight: 600; letter-spacing: 0.15em; }
   </style>
 </head>
@@ -79,8 +85,11 @@
     </div>
   </div>
 
-  <div style="border-top: 1px solid #DDD8D0; padding-top: 10pt; margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
-    <p style="font-size: 10.5pt; color: #6B6560;">5단계 "공유 집계 — 단일 진입점" 이 Word / Excel 수치 일관성을 보장합니다.</p>
+  <p class="caption">
+    <strong>STEP 5 · 공유 집계</strong>가 단일 진입점으로서 <strong>Word ↔ Excel 수치 일관성</strong>을 보장합니다.
+  </p>
+
+  <div style="border-top: 1px solid #DDD8D0; padding-top: 8pt; margin-top: auto; display: flex; justify-content: flex-end; align-items: center;">
     <p class="pageno">04 / 06</p>
   </div>
 </body>

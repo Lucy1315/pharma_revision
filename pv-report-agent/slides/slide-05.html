@@ -9,93 +9,144 @@
       font-family: 'Pretendard', sans-serif;
       background: #FAF8F5;
       color: #2D2A26;
-      padding: 36pt 56pt;
+      padding: 28pt 56pt;
       display: flex; flex-direction: column;
       position: relative;
       overflow: hidden;
     }
     .gold-rule { width: 56pt; height: 2pt; background: #B8860B; }
     .hl { background: linear-gradient(transparent 58%, #FFE066 58%); padding: 0 2pt; }
-    .col-title { font-size: 9pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600; margin-bottom: 10pt; }
-    .tree-node { font-size: 10pt; color: #4A4640; line-height: 1.6; }
-    .tree-node.lv1 { font-weight: 700; color: #2D2A26; }
-    .tree-node.lv2 { padding-left: 12pt; }
-    .tree-node.lv3 { padding-left: 24pt; color: #6B6560; font-size: 9.5pt; }
-    .sheets { display: flex; flex-wrap: wrap; gap: 5pt; margin-top: 6pt; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24pt; margin-top: 14pt; flex: 1; }
+    .col-title {
+      font-size: 9pt; letter-spacing: 0.22em; color: #B8860B;
+      font-weight: 700; margin-bottom: 8pt;
+    }
+    .block {
+      background: #FFFFFF; border: 1pt solid #E5DFD5;
+      border-radius: 4pt; padding: 10pt 12pt;
+    }
+    .block + .block { margin-top: 8pt; }
+    .block.accent { background: #FFFAEC; border-color: #D4AF37; }
+    .block-label {
+      font-size: 9.5pt; font-weight: 700; color: #2D2A26;
+      margin-bottom: 5pt;
+    }
+    .tree {
+      font-size: 10pt; color: #4A4640; line-height: 1.45;
+    }
+    .tree .node { margin-left: 10pt; }
+    .tree .leaf { margin-left: 20pt; color: #6B6560; font-size: 9.5pt; }
+    .tree strong { color: #2D2A26; font-weight: 600; }
+    .sheets { display: flex; flex-wrap: wrap; gap: 4pt; }
     .sheet-chip {
-      font-size: 8.5pt; color: #2D2A26;
-      padding: 2pt 6pt; background: #FFFFFF; border: 1pt solid #DDD8D0;
-      border-radius: 3pt;
+      font-size: 9pt; padding: 3pt 7pt;
+      background: #F3EEE5; border: 1pt solid #DDD8D0;
+      border-radius: 3pt; color: #2D2A26;
     }
-    .tech-line {
-      display: flex; gap: 8pt; align-items: baseline;
-      font-size: 10pt; color: #4A4640; margin-bottom: 6pt;
-      line-height: 1.5;
+    .sheet-chip.gold { background: #FFFAEC; border-color: #D4AF37; color: #8B6914; font-weight: 600; }
+    .stack {
+      display: flex; flex-wrap: wrap; gap: 4pt;
+      font-size: 9.5pt; color: #4A4640;
     }
-    .tech-line strong { color: #2D2A26; min-width: 52pt; font-weight: 700; }
-    .qa-line { font-size: 10pt; color: #4A4640; line-height: 1.55; margin-bottom: 4pt; }
-    .qa-line .tag {
-      display: inline-block; font-size: 8.5pt; letter-spacing: 0.1em;
-      color: #B8860B; font-weight: 700; margin-right: 4pt;
+    .tag {
+      padding: 2pt 7pt;
+      background: #F3EEE5; border-radius: 10pt;
+      color: #4A4640;
     }
-    .big-stat {
-      font-size: 30pt; font-weight: 700; letter-spacing: -0.02em;
-      color: #B8860B; line-height: 1.15;
+    .quality-row {
+      display: flex; align-items: baseline; gap: 8pt;
+      font-size: 9.5pt; color: #4A4640; line-height: 1.45;
+      margin-top: 3pt;
     }
-    .big-stat sub { font-size: 12pt; color: #6B6560; font-weight: 500; }
+    .quality-row .num {
+      font-size: 14pt; font-weight: 700; color: #B8860B;
+      letter-spacing: -0.02em; min-width: 32pt;
+    }
     .pageno { font-size: 10pt; color: #B8860B; font-weight: 600; letter-spacing: 0.15em; }
   </style>
 </head>
 <body>
   <div style="display: flex; align-items: center; gap: 14pt;">
     <div class="gold-rule"></div>
-    <p style="font-size: 10pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">OUTPUTS · STACK</p>
+    <p style="font-size: 10pt; letter-spacing: 0.22em; color: #B8860B; font-weight: 600;">OUTPUTS · TECH STACK</p>
   </div>
 
-  <h2 style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-top: 14pt;">
-    가이드라인 구조 <span class="hl">그대로 재현</span>
+  <h2 style="font-size: 22pt; font-weight: 700; letter-spacing: -0.02em; color: #2D2A26; margin-top: 12pt;">
+    <span class="hl">두 개의 산출물</span>, 하나의 집계 엔진
   </h2>
 
-  <div style="flex: 1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 32pt; margin-top: 20pt;">
+  <div class="grid2">
+    <!-- LEFT: Outputs -->
     <div>
-      <p class="col-title">OUTPUT · Word + Excel</p>
-      <p class="tree-node lv1">Word 문서</p>
-      <p class="tree-node lv2">표지 → 1. 요약 → 2. 상세</p>
-      <p class="tree-node lv3">2.2.다 (ㄱ)보고건수 → (ㄴ)인구학적 → (ㄷ)SOC/PT · 중대성 · Line Listing</p>
-      <p class="tree-node lv3">(ㄹ)허가사항 비교 → (ㅁ)허가사항 외 → (ㅂ)검토</p>
+      <p class="col-title">OUTPUTS · 산출물</p>
 
-      <p class="tree-node lv1" style="margin-top: 10pt;">분석 엑셀 (8~9시트)</p>
-      <div class="sheets">
-        <span class="sheet-chip">요약통계</span>
-        <span class="sheet-chip">Word연동</span>
-        <span class="sheet-chip">분석테이블</span>
-        <span class="sheet-chip">Line Listing</span>
-        <span class="sheet-chip">DEMO</span>
-        <span class="sheet-chip">DRUG</span>
-        <span class="sheet-chip">EVENT</span>
-        <span class="sheet-chip">ASSESSMENT</span>
-        <span class="sheet-chip">코드참조</span>
+      <div class="block">
+        <p class="block-label">📄 Word 보고서 구조</p>
+        <div class="tree">
+          <p><strong>표지</strong> · 회사/품목 정보 테이블</p>
+          <p><strong>1. 요약</strong></p>
+          <p><strong>2. 상세</strong></p>
+          <p class="node">2.2.다 수집대상정보</p>
+          <p class="leaf">(ㄱ) 보고건수 · (ㄴ) 인구학적</p>
+          <p class="leaf">(ㄷ) SOC/PT · 중대성 · Line Listing</p>
+          <p class="leaf">(ㄹ) 허가비교 · (ㅁ) 허가외 · (ㅂ) 검토</p>
+        </div>
+      </div>
+
+      <div class="block accent">
+        <p class="block-label" style="color:#8B6914;">📊 분석 엑셀 · 8~9시트</p>
+        <div class="sheets">
+          <span class="sheet-chip gold">요약통계</span>
+          <span class="sheet-chip gold">Word연동</span>
+          <span class="sheet-chip">분석테이블</span>
+          <span class="sheet-chip">Line Listing</span>
+          <span class="sheet-chip">DEMO</span>
+          <span class="sheet-chip">DRUG</span>
+          <span class="sheet-chip">EVENT</span>
+          <span class="sheet-chip">ASSESSMENT</span>
+          <span class="sheet-chip">코드참조</span>
+        </div>
       </div>
     </div>
 
-    <div style="border-left: 1pt solid #DDD8D0; padding-left: 28pt;">
+    <!-- RIGHT: Tech + Quality -->
+    <div>
       <p class="col-title">TECH · QUALITY</p>
-      <div class="tech-line"><strong>Runtime</strong><span>Python 3.11 · Streamlit Cloud</span></div>
-      <div class="tech-line"><strong>Data</strong><span>pandas · openpyxl · python-docx</span></div>
-      <div class="tech-line"><strong>API</strong><span>공공데이터포털 DrugPrdtPrmsnInfoService07</span></div>
 
-      <div style="margin-top: 16pt; display: flex; align-items: baseline; gap: 12pt;">
-        <p class="big-stat">74<sub>&nbsp;tests</sub></p>
-        <p style="font-size: 10pt; color: #6B6560; line-height: 1.4;">pytest 전체 통과<br/><span style="color:#9C958D; font-size:9pt;">pre-push 훅으로 자동 실행</span></p>
+      <div class="block">
+        <p class="block-label">⚙ 기술 스택</p>
+        <div class="stack">
+          <span class="tag">Python 3.11</span>
+          <span class="tag">pandas</span>
+          <span class="tag">openpyxl</span>
+          <span class="tag">python-docx</span>
+          <span class="tag">streamlit</span>
+        </div>
+        <p style="font-size: 9pt; color: #6B6560; margin-top: 8pt; line-height: 1.5;">
+          <strong style="color:#2D2A26;">외부 API</strong> · 공공데이터포털
+          <code style="font-size: 8.5pt;">DrugPrdtPrmsnInfoService07</code>
+        </p>
       </div>
 
-      <p class="qa-line" style="margin-top: 12pt;"><span class="tag">QA</span><code style="font-size:9pt;">compare.py</code> 회귀 검증 — 수작업 보고서와 8/8 수치 일치</p>
-      <p class="qa-line"><span class="tag">DOMAIN</span>도메인 룰 <code style="font-size:9pt;">.claude/rules/</code> 문서화</p>
+      <div class="block">
+        <p class="block-label">✅ 품질 보증</p>
+        <div class="quality-row">
+          <span class="num">74</span>
+          <span><strong style="color:#2D2A26;">pytest 통과</strong> · 수작업 보고서 대비 <span class="hl">8개 핵심 수치 100% 일치</span></span>
+        </div>
+        <div class="quality-row">
+          <span class="num" style="font-size: 11pt;">↻</span>
+          <span><strong style="color:#2D2A26;"><code style="font-size:9pt;">compare.py</code></strong> 회귀 검증 + <strong style="color:#2D2A26;"><code style="font-size:9pt;">pre-push</code></strong> 훅 자동 실행</span>
+        </div>
+        <div class="quality-row">
+          <span class="num" style="font-size: 11pt;">📘</span>
+          <span>도메인 규칙은 <code style="font-size:9pt;">.claude/rules/</code> 문서화</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div style="border-top: 1px solid #DDD8D0; padding-top: 10pt; display: flex; justify-content: space-between; align-items: center;">
-    <p style="font-size: 10.5pt; color: #2D2A26;">Word ↔ Excel <span class="hl"><strong>수치 100% 일치</strong></span></p>
+  <div style="border-top: 1px solid #DDD8D0; padding-top: 8pt; margin-top: 6pt; display: flex; justify-content: flex-end; align-items: center;">
     <p class="pageno">05 / 06</p>
   </div>
 </body>
