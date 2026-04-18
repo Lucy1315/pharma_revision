@@ -215,7 +215,7 @@ with col_left:
     st.subheader("② 제품 정보 조회")
     search_mode = st.radio(
         "조회 방식",
-        ["품목기준코드로 조회", "제품명으로 검색", "nedrug URL (기존 방식)"],
+        ["품목기준코드로 조회", "제품명으로 검색", "nedrug URL"],
         horizontal=True,
         key=f"search_mode_{_n}",
         help="공공데이터포털 API를 통해 조회합니다. nedrug URL 방식은 해외 서버에서 차단될 수 있습니다."
