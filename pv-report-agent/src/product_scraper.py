@@ -143,14 +143,17 @@ def _item_to_product_info(item: dict) -> ProductInfo:
     info.company_name = (item.get("ENTP_NAME") or "").strip()
     info.item_seq = (item.get("ITEM_SEQ") or "").strip()
     info.approval_date = (item.get("ITEM_PERMIT_DATE") or "").strip()
-    info.approval_number = (item.get("PERMIT_KIND_CODE") or item.get("PRDUCT_PRMISN_NO") or "").strip()
+    # 공공데이터포털 DrugPrdtPrmsnInfoService07 응답에 별도 허가번호 필드가 없어
+    # 품목기준코드(ITEM_SEQ)가 곧 품목허가번호 역할을 한다.
+    info.approval_number = (item.get("PRDUCT_PRMISN_NO") or "").strip() or info.item_seq
     info.storage = (item.get("STORAGE_METHOD") or "").strip()
     info.use_period = (item.get("VALID_TERM") or "").strip()
     info.standard_code = (item.get("BAR_CODE") or "").strip()
     info.rare_drug_yn = (item.get("RARE_DRUG_YN") or "").strip()
     info.narcotic_kind_code = (item.get("NARCOTIC_KIND_CODE") or "").strip()
 
-    main_ingr = _strip_code_prefix(item.get("MAIN_ITEM_INGR") or "")
+    # MAIN_ITEM_INGR 가 비어있는 품목이 많아 MATERIAL_NAME(전성분 표기) 를 fallback.
+    main_ingr = _strip_code_prefix(item.get("MAIN_ITEM_INGR") or item.get("MATERIAL_NAME") or "")
     info.ingredient_name = main_ingr
 
     ingr_eng = _strip_code_prefix(item.get("INGR_NAME") or item.get("MAIN_INGR_ENG") or "")

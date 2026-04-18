@@ -273,6 +273,12 @@ with col_left:
                                 key=f"api_results_{_n}",
                             )
                             product = options[selected_label]
+                            # 검색 응답은 성분/허가번호 등 일부 필드가 비어있으므로
+                            # item_seq 로 상세+주성분 API 를 재호출하여 보강.
+                            if product.item_seq:
+                                enriched = lookup_product_info(item_seq=product.item_seq)
+                                if enriched and enriched.item_name:
+                                    product = enriched
                             st.success(f"✅ 선택: **{product.item_name}**")
                         else:
                             st.warning("검색 결과가 없습니다.")
