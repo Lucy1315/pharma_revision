@@ -1,5 +1,6 @@
 import io
 import re
+import urllib.parse
 import zipfile
 import tempfile
 from pathlib import Path
@@ -16,7 +17,7 @@ from src.transformer import filter_invalid, transform_demo, transform_drug, tran
 from src.joiner import detect_drug_code, join_tables, build_line_listing
 from src.report_builder import build_report
 from src.excel_builder import build_excel
-from src.product_scraper import scrape_product_info, lookup_product_info, search_drug_by_name, ProductInfo
+from src.product_scraper import lookup_product_info, search_drug_by_name, ProductInfo
 from src.types import ProcessedData
 
 
@@ -215,10 +216,10 @@ with col_left:
     st.subheader("② 제품 정보 조회")
     search_mode = st.radio(
         "조회 방식",
-        ["품목기준코드로 조회", "제품명으로 검색", "nedrug URL"],
+        ["품목기준코드로 조회", "제품명으로 검색"],
         horizontal=True,
         key=f"search_mode_{_n}",
-        help="공공데이터포털 API를 통해 조회합니다. nedrug URL 방식은 해외 서버에서 차단될 수 있습니다."
+        help="공공데이터포털 API를 통해 조회합니다."
     )
 
     product: ProductInfo | None = None
@@ -236,6 +237,11 @@ with col_left:
                     product = lookup_product_info(item_seq=_api_code.strip())
                     if product and product.item_name:
                         st.success(f"✅ API 조회 완료: **{product.item_name}** ({product.company_name})")
+                        _nedrug_url = (
+                            "https://nedrug.mfds.go.kr/searchDrug"
+                            f"?searchYn=true&itemName={urllib.parse.quote(product.item_name)}"
+                        )
+                        st.markdown(f"🔗 nedrug 에서 확인: [{_nedrug_url}]({_nedrug_url})")
                     elif product and product.warnings:
                         # API 키/네트워크/호출제한 등은 st.error, 결과 없음은 st.warning
                         for w in product.warnings:
@@ -280,6 +286,13 @@ with col_left:
                                 if enriched and enriched.item_name:
                                     product = enriched
                             st.success(f"✅ 선택: **{product.item_name}**")
+                            # nedrug 검색 페이지 링크 (사용자 최종 확인용)
+                            if product.item_name:
+                                _nedrug_url = (
+                                    "https://nedrug.mfds.go.kr/searchDrug"
+                                    f"?searchYn=true&itemName={urllib.parse.quote(product.item_name)}"
+                                )
+                                st.markdown(f"🔗 nedrug 에서 확인: [{_nedrug_url}]({_nedrug_url})")
                         else:
                             st.warning("검색 결과가 없습니다.")
                     elif not _api_err:
@@ -287,37 +300,6 @@ with col_left:
                         st.warning("검색 결과가 없습니다. 제품명을 다시 확인하세요.")
                 except Exception as e:
                     st.error(f"API 검색 실패: {e}")
-
-    else:
-        nedrug_url = st.text_input(
-            "식약처 의약품통합정보시스템 URL",
-            placeholder="https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=...",
-            key=f"nedrug_url_{_n}",
-            help="nedrug.mfds.go.kr 제품 상세페이지 URL을 붙여넣으세요. (해외 서버에서 차단될 수 있음)"
-        )
-        if nedrug_url and nedrug_url.startswith("http"):
-            st.markdown(
-                f'🔗 **[nedrug 페이지를 브라우저에서 직접 열기]({nedrug_url})** '
-                "(새 탭) — 스크래핑이 실패하면 여기서 직접 확인 후 오른쪽에 복사·붙여넣기"
-            )
-            with st.spinner("제품 정보 조회 중..."):
-                try:
-                    product = scrape_product_info(nedrug_url)
-                    if product.item_name:
-                        st.success(f"✅ 제품 정보 조회 완료: **{product.item_name}**")
-                    elif product.item_seq:
-                        st.info(
-                            f"ℹ️ **품목기준코드 {product.item_seq}** 는 URL에서 자동 추출됐습니다.\n\n"
-                            "☝️ 위 링크를 눌러 nedrug 페이지를 열고 **제품명·회사명·허가일**을 "
-                            "복사해 오른쪽 필드에 붙여넣으세요."
-                        )
-                    else:
-                        st.warning("URL 형식을 확인하거나 오른쪽에서 직접 입력하세요.")
-                    if product and not product.item_seq:
-                        for w in product.warnings:
-                            st.warning(w)
-                except Exception as e:
-                    st.error(f"제품 정보 조회 실패: {e}")
 
 with col_right:
     st.subheader("③ 분석 기간")
@@ -341,11 +323,13 @@ with col_right:
 
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.text_input("시작일 (YYYY-MM-DD)", value=_auto_start or "2020-09-21",
+        start_date = st.text_input("시작일 (YYYY-MM-DD)", value=_auto_start,
+                                   placeholder="YYYY-MM-DD",
                                    key=f"start_{_n}",
                                    help="업로드된 DEMO.txt에서 자동 감지")
     with col2:
-        end_date = st.text_input("종료일 (YYYY-MM-DD)", value=_auto_end or "2024-06-30",
+        end_date = st.text_input("종료일 (YYYY-MM-DD)", value=_auto_end,
+                                 placeholder="YYYY-MM-DD",
                                  key=f"end_{_n}",
                                  help="업로드된 DEMO.txt에서 자동 감지")
 
