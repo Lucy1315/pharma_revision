@@ -352,3 +352,25 @@ class TestSearchAndLookup:
         info = _item_to_product_info(item)
         assert info.ingredient_name == "테스트성분"
         assert info.ingredient_name_en == "TestIngredient"
+
+    def test_item_to_product_info_normalizes_yyyymmdd_date(self):
+        """ITEM_PERMIT_DATE 가 YYYYMMDD 8자리이면 YYYY-MM-DD 로 변환, 그 외 형태는 유지."""
+        info8 = _item_to_product_info({
+            "ITEM_NAME": "X", "ENTP_NAME": "Y", "ITEM_SEQ": "201702641",
+            "ITEM_PERMIT_DATE": "20170529",
+        })
+        assert info8.approval_date == "2017-05-29"
+        info_hyphen = _item_to_product_info({
+            "ITEM_NAME": "X", "ENTP_NAME": "Y", "ITEM_SEQ": "Z",
+            "ITEM_PERMIT_DATE": "2015-07-22",
+        })
+        assert info_hyphen.approval_date == "2015-07-22"
+        info_empty = _item_to_product_info({"ITEM_NAME": "X", "ENTP_NAME": "", "ITEM_SEQ": ""})
+        assert info_empty.approval_date == ""
+
+    def test_item_to_product_info_approval_number_falls_back_to_item_seq(self):
+        """PRDUCT_PRMISN_NO 없을 때 ITEM_SEQ 로 허가번호 채움."""
+        info = _item_to_product_info({
+            "ITEM_NAME": "X", "ENTP_NAME": "Y", "ITEM_SEQ": "201702641",
+        })
+        assert info.approval_number == "201702641"

@@ -61,6 +61,14 @@ def _strip_code_prefix(text: str) -> str:
     return re.sub(r"\[M\d+\]", "", text).strip()
 
 
+def _normalize_date(text: str) -> str:
+    """YYYYMMDD 8자리 숫자를 YYYY-MM-DD 로 변환. 이미 하이픈이 있거나 길이가 다르면 원문 유지."""
+    t = (text or "").strip()
+    if re.fullmatch(r"\d{8}", t):
+        return f"{t[:4]}-{t[4:6]}-{t[6:]}"
+    return t
+
+
 def classify_api_error(err: str) -> str:
     """`_call_api`가 반환한 내부 에러 문자열을 사용자용 한글 메시지로 분류.
 
@@ -142,7 +150,7 @@ def _item_to_product_info(item: dict) -> ProductInfo:
     info.item_name = (item.get("ITEM_NAME") or "").strip()
     info.company_name = (item.get("ENTP_NAME") or "").strip()
     info.item_seq = (item.get("ITEM_SEQ") or "").strip()
-    info.approval_date = (item.get("ITEM_PERMIT_DATE") or "").strip()
+    info.approval_date = _normalize_date(item.get("ITEM_PERMIT_DATE") or "")
     # 공공데이터포털 DrugPrdtPrmsnInfoService07 응답에 별도 허가번호 필드가 없어
     # 품목기준코드(ITEM_SEQ)가 곧 품목허가번호 역할을 한다.
     info.approval_number = (item.get("PRDUCT_PRMISN_NO") or "").strip() or info.item_seq
@@ -333,7 +341,7 @@ def scrape_product_info(url: str) -> ProductInfo:
 
     info.item_name    = field_map.get("제품명", "")
     info.company_name = field_map.get("업체명", "")
-    info.approval_date = field_map.get("허가일", "")
+    info.approval_date = _normalize_date(field_map.get("허가일", ""))
     info.standard_code = field_map.get("표준코드", "")
     info.storage       = field_map.get("저장방법", "")
     info.use_period    = field_map.get("사용기간", "")
