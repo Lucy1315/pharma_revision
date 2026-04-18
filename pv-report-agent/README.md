@@ -16,8 +16,17 @@ KIDS 원시자료(DEMO/DRUG/EVENT/ASSESSMENT)를 업로드하면
 
 ```bash
 pip install -r requirements.txt
+
+# 공공데이터포털 API 키 설정 (필수 — 제품 정보 조회에 사용)
+export DATA_GO_KR_KEY="your_data_go_kr_key_here"
+# 또는 .streamlit/secrets.toml 에
+#   DATA_GO_KR_KEY = "your_data_go_kr_key_here"
+
 streamlit run app.py
 ```
+
+> **보안**: API 키는 **커밋하지 마세요**. `.streamlit/secrets.toml` 은 `.gitignore`에 등록되어 있습니다.
+> Streamlit Cloud 배포 시에는 앱 설정 > Secrets 탭에서 `DATA_GO_KR_KEY` 를 추가하세요.
 
 ## CLI 사용
 

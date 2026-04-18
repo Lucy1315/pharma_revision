@@ -8,6 +8,7 @@
 공공데이터포털 API를 우선 사용하고, 실패 시 nedrug 스크래핑으로 대체합니다.
 """
 import json
+import os
 import re
 import socket
 import ssl
@@ -16,8 +17,23 @@ import urllib.request
 import urllib.parse
 from dataclasses import dataclass, field
 
-_DATA_GO_KR_KEY = "78dd2db3fe72d72859ddac4b14b20240198fb736aebc531227e72a6f14d8783b"
 _DATA_GO_KR_BASE = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07"
+
+
+def _get_api_key() -> str:
+    """공공데이터포털 API 키 조회.
+
+    우선순위: 환경변수 `DATA_GO_KR_KEY` → Streamlit `st.secrets["DATA_GO_KR_KEY"]`.
+    두 경로 모두 비어있으면 빈 문자열. `_call_api`가 이를 감지해 API_KEY_MISSING 에러 반환.
+    """
+    key = os.environ.get("DATA_GO_KR_KEY", "").strip()
+    if key:
+        return key
+    try:
+        import streamlit as st
+        return str(st.secrets.get("DATA_GO_KR_KEY", "")).strip()
+    except Exception:
+        return ""
 
 
 @dataclass
@@ -46,8 +62,17 @@ def _strip_code_prefix(text: str) -> str:
 
 
 def _call_api(endpoint: str, params: dict, retries: int = 3, timeout: int = 15) -> tuple[dict | None, str]:
-    """공공데이터포털 API 호출. (parsed_json, error_msg) 반환."""
-    params = {**params, "serviceKey": _DATA_GO_KR_KEY, "type": "json"}
+    """공공데이터포털 API 호출. (parsed_json, error_msg) 반환.
+
+    error_msg 규약:
+      - ""                 : 성공
+      - "API_KEY_MISSING"  : 키 미설정 (env / st.secrets 모두 비어있음)
+      - 그 외               : urllib / socket / json 예외 메시지
+    """
+    api_key = _get_api_key()
+    if not api_key:
+        return None, "API_KEY_MISSING"
+    params = {**params, "serviceKey": api_key, "type": "json"}
     url = f"{_DATA_GO_KR_BASE}/{endpoint}?{urllib.parse.urlencode(params, quote_via=urllib.parse.quote)}"
     last_err = ""
     for attempt in range(retries):

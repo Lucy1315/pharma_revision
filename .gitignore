@@ -4,6 +4,11 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+.qa-venv/
+
+# Streamlit secrets (API 키 등 민감 정보)
+.streamlit/secrets.toml
+**/.streamlit/secrets.toml
 
 # 생성된 출력 파일
 pv-report-agent/data/output/
